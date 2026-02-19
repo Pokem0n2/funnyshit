@@ -290,10 +290,11 @@
                         const row = Math.floor(i / this.size);
                         const col = i % this.size;
                         piece.style.backgroundImage = `url(${imageUrl})`;
+                        piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
                     
-                    piece.addEventListener('click', () => this.handlePieceClick(index));
+                    piece.addEventListener('click', () => this.handlePieceClick(i));
                     this.puzzleGrid.appendChild(piece);
                     this.puzzlePieces.push(piece);
                     this.originalOrder.push(i);
@@ -323,6 +324,7 @@
                         this.emptyPieceIndex = index;
                     } else {
                         piece.classList.remove('empty');
+                        piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
                         const row = Math.floor(newIndex / this.size);
                         const col = newIndex % this.size;
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;

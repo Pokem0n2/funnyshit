@@ -134,7 +134,7 @@
         }
         
         .home-btn {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
             border: none;
             border-radius: 50px;
             color: white;
@@ -147,7 +147,7 @@
         }
         
         .home-btn:hover {
-            background: linear-gradient(135deg, #fee140 0%, #fa709a 100%);
+            background: linear-gradient(135deg, #38f9d7 0%, #43e97b 100%);
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
@@ -275,7 +275,7 @@
         function appendFunction(func) {
             if (func === '^2') {
                 if (!waitingForOperand) {
-                    currentExpression += currentResult + '²';
+                    currentExpression += currentResult + '^2';
                     calculate();
                 }
             } else if (func === 'π') {
