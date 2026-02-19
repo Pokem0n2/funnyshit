@@ -222,9 +222,8 @@
                 this.time = 0;
                 this.timerInterval = null;
                 this.isPlaying = false;
-                this.emptyPieceIndex = -1;
+                this.emptyIndex = -1;
                 this.puzzlePieces = [];
-                this.originalOrder = [];
                 
                 this.init();
             }
@@ -274,7 +273,6 @@
                 
                 this.puzzleGrid.innerHTML = '';
                 this.puzzlePieces = [];
-                this.originalOrder = [];
                 
                 const imageUrl = `https://picsum.photos/800/800?random=${Math.floor(Math.random() * 1000)}`;
                 
@@ -285,7 +283,7 @@
                     
                     if (i === this.size * this.size - 1) {
                         piece.classList.add('empty');
-                        this.emptyPieceIndex = i;
+                        this.emptyIndex = i;
                     } else {
                         const row = Math.floor(i / this.size);
                         const col = i % this.size;
@@ -294,12 +292,13 @@
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
                     
+                    // 使用闭包保存正确的索引值
                     piece.addEventListener('click', (function(index) {
                         return () => this.handlePieceClick(index);
                     }).call(this, i));
+                    
                     this.puzzleGrid.appendChild(piece);
                     this.puzzlePieces.push(piece);
-                    this.originalOrder.push(i);
                 }
             }
             
@@ -323,7 +322,7 @@
                     
                     if (newIndex === this.size * this.size - 1) {
                         piece.classList.add('empty');
-                        this.emptyPieceIndex = index;
+                        this.emptyIndex = index;
                     } else {
                         piece.classList.remove('empty');
                         piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
@@ -360,13 +359,13 @@
             
             /**
              * 处理拼图块点击
-             * @param {number} index - 点击的拼图块在数组中的索引
+             * @param {number} index - 点击的拼图块索引
              */
             handlePieceClick(index) {
                 if (!this.isPlaying) return;
                 
-                if (this.isAdjacent(index, this.emptyPieceIndex)) {
-                    this.swapPieces(index, this.emptyPieceIndex);
+                if (this.isAdjacent(index, this.emptyIndex)) {
+                    this.movePiece(index);
                     this.moves++;
                     this.movesElement.textContent = this.moves;
                     
@@ -377,9 +376,9 @@
             }
             
             /**
-             * 检查两个拼图块是否相邻
-             * @param {number} index1 - 第一个拼图块索引
-             * @param {number} index2 - 第二个拼图块索引
+             * 检查两个位置是否相邻
+             * @param {number} index1 - 第一个位置索引
+             * @param {number} index2 - 第二个位置索引
              * @returns {boolean} - 是否相邻
              */
             isAdjacent(index1, index2) {
@@ -392,26 +391,29 @@
             }
             
             /**
-             * 交换两个拼图块
-             * @param {number} index1 - 第一个拼图块索引
-             * @param {number} index2 - 第二个拼图块索引
+             * 移动拼图块到空缺位置
+             * @param {number} index - 要移动的拼图块索引
              */
-            swapPieces(index1, index2) {
-                const piece1 = this.puzzlePieces[index1];
-                const piece2 = this.puzzlePieces[index2];
+            movePiece(index) {
+                const piece = this.puzzlePieces[index];
+                const emptyPiece = this.puzzlePieces[this.emptyIndex];
                 
-                const tempIndex = piece1.dataset.index;
-                piece1.dataset.index = piece2.dataset.index;
-                piece2.dataset.index = tempIndex;
+                // 交换数据索引
+                const tempIndex = piece.dataset.index;
+                piece.dataset.index = emptyPiece.dataset.index;
+                emptyPiece.dataset.index = tempIndex;
                 
-                const tempBg = piece1.style.backgroundPosition;
-                piece1.style.backgroundPosition = piece2.style.backgroundPosition;
-                piece2.style.backgroundPosition = tempBg;
+                // 交换背景位置
+                const tempBg = piece.style.backgroundPosition;
+                piece.style.backgroundPosition = emptyPiece.style.backgroundPosition;
+                emptyPiece.style.backgroundPosition = tempBg;
                 
-                piece1.classList.toggle('empty');
-                piece2.classList.toggle('empty');
+                // 交换empty类
+                piece.classList.add('empty');
+                emptyPiece.classList.remove('empty');
                 
-                this.emptyPieceIndex = index1;
+                // 更新空缺位置
+                this.emptyIndex = index;
             }
             
             /**
@@ -510,7 +512,7 @@
                 
                 // 找到一个可移动的拼图块
                 for (let i = 0; i < this.puzzlePieces.length; i++) {
-                    if (i !== this.emptyPieceIndex && this.isAdjacent(i, this.emptyPieceIndex)) {
+                    if (i !== this.emptyIndex && this.isAdjacent(i, this.emptyIndex)) {
                         const piece = this.puzzlePieces[i];
                         piece.style.animation = 'hint 1s ease-in-out';
                         setTimeout(() => {
