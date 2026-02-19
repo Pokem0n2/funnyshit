@@ -152,6 +152,22 @@
             font-family: 'Courier New', monospace;
         }
         
+        .game-rules {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .game-rules h3 {
+            margin-bottom: 10px;
+        }
+        
+        .game-rules ul {
+            margin-left: 20px;
+        }
+        
         @media (max-width: 768px) {
             h1 {
                 font-size: 2rem;
@@ -172,6 +188,17 @@
 <body>
     <div class="container">
         <h1>🧩 交互式拼图游戏</h1>
+        
+        <div class="game-rules">
+            <h3>游戏规则：</h3>
+            <ul>
+                <li>拼图游戏的根本原则是<strong>移动</strong>，而不是互换两个图块</li>
+                <li>黑色的空缺位置是用来给其他图块提供移动空间的</li>
+                <li>当你点击与空缺位置相邻的拼图块时，该拼图块会移动到空缺位置</li>
+                <li>空缺位置会随之移动到拼图块原来的位置，因此空缺位置不是固定的</li>
+                <li>通过不断移动拼图块，最终将所有拼图块恢复到正确的位置</li>
+            </ul>
+        </div>
         
         <div class="game-info">
             <div class="info-item">步数: <span id="moves">0</span></div>
@@ -202,6 +229,12 @@
     <script>
         /**
          * 拼图游戏类
+         * 
+         * 核心原理：
+         * 1. 拼图游戏中有一个空缺位置（黑色方块）
+         * 2. 当点击与空缺位置相邻的拼图块时，该拼图块会移动到空缺位置
+         * 3. 空缺位置随之移动到拼图块原来的位置
+         * 4. 这样就实现了拼图块的移动，而不是简单的互换
          */
         class PuzzleGame {
             /**
@@ -222,8 +255,8 @@
                 this.time = 0;
                 this.timerInterval = null;
                 this.isPlaying = false;
-                this.emptyIndex = -1;
-                this.puzzlePieces = [];
+                this.emptyIndex = -1; // 空缺位置的索引
+                this.puzzlePieces = []; // 存储所有拼图块的数组
                 
                 this.init();
             }
@@ -266,37 +299,48 @@
              * 创建拼图
              */
             createPuzzle() {
+                // 设置网格大小
                 this.puzzleGrid.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
                 this.puzzleGrid.style.gridTemplateRows = `repeat(${this.size}, 1fr)`;
                 this.puzzleGrid.style.width = `${Math.min(500, window.innerWidth * 0.8)}px`;
                 this.puzzleGrid.style.height = `${Math.min(500, window.innerWidth * 0.8)}px`;
                 
+                // 清空网格
                 this.puzzleGrid.innerHTML = '';
                 this.puzzlePieces = [];
                 
+                // 生成随机图片
                 const imageUrl = `https://picsum.photos/800/800?random=${Math.floor(Math.random() * 1000)}`;
                 
+                // 创建拼图块
                 for (let i = 0; i < this.size * this.size; i++) {
                     const piece = document.createElement('div');
                     piece.className = 'puzzle-piece';
-                    piece.dataset.index = i;
+                    piece.dataset.index = i; // 存储拼图块的正确位置索引
                     
+                    // 最后一个块作为空缺位置
                     if (i === this.size * this.size - 1) {
                         piece.classList.add('empty');
                         this.emptyIndex = i;
                     } else {
+                        // 计算拼图块在原图中的位置
                         const row = Math.floor(i / this.size);
                         const col = i % this.size;
+                        // 设置背景图片和位置
                         piece.style.backgroundImage = `url(${imageUrl})`;
                         piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
                     
-                    // 使用闭包保存正确的索引值
-                    piece.addEventListener('click', (function(index) {
-                        return () => this.handlePieceClick(index);
-                    }).call(this, i));
+                    // 使用闭包确保每个拼图块都能正确处理点击事件
+                    const self = this;
+                    piece.addEventListener('click', function() {
+                        // 计算当前点击的拼图块在数组中的索引
+                        const index = self.puzzlePieces.indexOf(this);
+                        self.handlePieceClick(index);
+                    });
                     
+                    // 添加到网格和数组
                     this.puzzleGrid.appendChild(piece);
                     this.puzzlePieces.push(piece);
                 }
@@ -306,26 +350,30 @@
              * 打乱拼图
              */
             shufflePuzzle() {
+                // 创建一个包含所有索引的数组
                 const numbers = Array.from({ length: this.size * this.size }, (_, i) => i);
                 
                 // 确保拼图可解
                 do {
+                    // Fisher-Yates 洗牌算法
                     for (let i = numbers.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
                         [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
                     }
                 } while (!this.isSolvable(numbers) || this.isSolved(numbers));
                 
+                // 根据打乱后的顺序更新拼图块
                 this.puzzlePieces.forEach((piece, index) => {
                     const newIndex = numbers[index];
                     piece.dataset.index = newIndex;
                     
+                    // 处理空缺位置
                     if (newIndex === this.size * this.size - 1) {
                         piece.classList.add('empty');
                         this.emptyIndex = index;
                     } else {
                         piece.classList.remove('empty');
-                        piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
+                        // 重新计算并设置背景位置
                         const row = Math.floor(newIndex / this.size);
                         const col = newIndex % this.size;
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
@@ -335,23 +383,27 @@
             
             /**
              * 检查拼图是否可解
-             * @param {Array} numbers - 拼图数字数组
+             * @param {Array} numbers - 打乱后的数字数组
              * @returns {boolean} - 是否可解
              */
             isSolvable(numbers) {
                 let inversions = 0;
                 
+                // 计算逆序数
                 for (let i = 0; i < numbers.length; i++) {
                     for (let j = i + 1; j < numbers.length; j++) {
+                        // 跳过空缺位置
                         if (numbers[i] !== numbers.length - 1 && numbers[j] !== numbers.length - 1 && numbers[i] > numbers[j]) {
                             inversions++;
                         }
                     }
                 }
                 
+                // 奇数尺寸的拼图
                 if (this.size % 2 === 1) {
                     return inversions % 2 === 0;
                 } else {
+                    // 偶数尺寸的拼图
                     const emptyRow = Math.floor(numbers.indexOf(numbers.length - 1) / this.size);
                     return (inversions + emptyRow) % 2 === 1;
                 }
@@ -362,13 +414,18 @@
              * @param {number} index - 点击的拼图块索引
              */
             handlePieceClick(index) {
+                // 如果游戏未开始，直接返回
                 if (!this.isPlaying) return;
                 
+                // 检查点击的拼图块是否与空缺位置相邻
                 if (this.isAdjacent(index, this.emptyIndex)) {
+                    // 移动拼图块到空缺位置
                     this.movePiece(index);
+                    // 更新步数
                     this.moves++;
                     this.movesElement.textContent = this.moves;
                     
+                    // 检查是否获胜
                     if (this.checkWin()) {
                         this.endGame(true);
                     }
@@ -382,11 +439,13 @@
              * @returns {boolean} - 是否相邻
              */
             isAdjacent(index1, index2) {
+                // 计算两个位置的行和列
                 const row1 = Math.floor(index1 / this.size);
                 const col1 = index1 % this.size;
                 const row2 = Math.floor(index2 / this.size);
                 const col2 = index2 % this.size;
                 
+                // 检查是否相邻（上下或左右）
                 return (Math.abs(row1 - row2) === 1 && col1 === col2) || (Math.abs(col1 - col2) === 1 && row1 === row2);
             }
             
@@ -421,6 +480,7 @@
              * @returns {boolean} - 是否获胜
              */
             checkWin() {
+                // 检查每个拼图块是否在正确的位置
                 for (let i = 0; i < this.puzzlePieces.length; i++) {
                     if (parseInt(this.puzzlePieces[i].dataset.index) !== i) {
                         return false;
@@ -455,7 +515,7 @@
                     this.time = 0;
                     this.updateTime();
                     this.startTimer();
-                    this.messageElement.textContent = '游戏开始！';
+                    this.messageElement.textContent = '游戏开始！点击与黑色空缺相邻的拼图块进行移动';
                     this.startBtn.textContent = '暂停游戏';
                 } else {
                     this.pauseGame();
