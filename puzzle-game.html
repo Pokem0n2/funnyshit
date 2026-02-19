@@ -13,7 +13,7 @@
         
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -167,11 +167,26 @@
                 margin: 0 5px;
             }
         }
+        
+        @keyframes hint {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px #ffeb3b; }
+        }
+        
+        @keyframes win {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .win-animation {
+            animation: win 1s ease-in-out;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧩 拼图游戏</h1>
+        <h1>🧩 交互式拼图游戏</h1>
         
         <div class="game-info">
             <div class="info-item">步数: <span id="moves">0</span></div>
@@ -225,6 +240,7 @@
                 this.emptyPieceIndex = -1;
                 this.puzzlePieces = [];
                 this.originalOrder = [];
+                this.imageUrl = 'https://picsum.photos/800/800?image=10'; // 使用固定图片
                 
                 this.init();
             }
@@ -276,8 +292,6 @@
                 this.puzzlePieces = [];
                 this.originalOrder = [];
                 
-                const imageUrl = `https://picsum.photos/800/800?random=${Math.floor(Math.random() * 1000)}`;
-                
                 for (let i = 0; i < this.size * this.size; i++) {
                     const piece = document.createElement('div');
                     piece.className = 'puzzle-piece';
@@ -289,7 +303,8 @@
                     } else {
                         const row = Math.floor(i / this.size);
                         const col = i % this.size;
-                        piece.style.backgroundImage = `url(${imageUrl})`;
+                        piece.style.backgroundImage = `url(${this.imageUrl})`;
+                        // 正确计算背景大小和位置
                         piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
@@ -307,7 +322,7 @@
             shufflePuzzle() {
                 const numbers = Array.from({ length: this.size * this.size }, (_, i) => i);
                 
-                // 确保拼图可解
+                // 确保拼图可解且不是已完成状态
                 do {
                     for (let i = numbers.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
@@ -324,6 +339,7 @@
                         this.emptyPieceIndex = index;
                     } else {
                         piece.classList.remove('empty');
+                        piece.style.backgroundImage = `url(${this.imageUrl})`;
                         piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
                         const row = Math.floor(newIndex / this.size);
                         const col = newIndex % this.size;
@@ -398,17 +414,21 @@
                 const piece1 = this.puzzlePieces[index1];
                 const piece2 = this.puzzlePieces[index2];
                 
+                // 交换索引
                 const tempIndex = piece1.dataset.index;
                 piece1.dataset.index = piece2.dataset.index;
                 piece2.dataset.index = tempIndex;
                 
+                // 交换背景位置
                 const tempBg = piece1.style.backgroundPosition;
                 piece1.style.backgroundPosition = piece2.style.backgroundPosition;
                 piece2.style.backgroundPosition = tempBg;
                 
+                // 交换empty类
                 piece1.classList.toggle('empty');
                 piece2.classList.toggle('empty');
                 
+                // 更新空块索引
                 this.emptyPieceIndex = index1;
             }
             
@@ -493,6 +513,11 @@
                 
                 if (isWin) {
                     this.messageElement.textContent = `恭喜获胜！用时 ${this.formatTime(this.time)}，步数 ${this.moves}`;
+                    // 添加获胜动画
+                    this.puzzleGrid.classList.add('win-animation');
+                    setTimeout(() => {
+                        this.puzzleGrid.classList.remove('win-animation');
+                    }, 1000);
                 } else {
                     this.messageElement.textContent = '游戏结束';
                 }
@@ -557,16 +582,6 @@
                 return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             }
         }
-        
-        // 添加提示动画
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes hint {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.1); box-shadow: 0 0 20px #ffeb3b; }
-            }
-        `;
-        document.head.appendChild(style);
         
         // 初始化游戏
         window.addEventListener('DOMContentLoaded', () => {
