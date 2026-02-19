@@ -77,6 +77,7 @@
             transition: all 0.3s ease;
             border-radius: 5px;
             position: relative;
+            aspect-ratio: 1;
         }
         
         .puzzle-piece:hover {
@@ -292,7 +293,7 @@
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
                     
-                    piece.addEventListener('click', () => this.handlePieceClick(parseInt(piece.dataset.index)));
+                    piece.addEventListener('click', () => this.handlePieceClick(index));
                     this.puzzleGrid.appendChild(piece);
                     this.puzzlePieces.push(piece);
                     this.originalOrder.push(i);
@@ -355,7 +356,7 @@
             
             /**
              * 处理拼图块点击
-             * @param {number} index - 点击的拼图块索引
+             * @param {number} index - 点击的拼图块在数组中的索引
              */
             handlePieceClick(index) {
                 if (!this.isPlaying) return;
