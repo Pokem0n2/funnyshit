@@ -325,6 +325,7 @@
                 this.puzzlePieces.forEach((piece, index) => {
                     const newIndex = numbers[index];
                     piece.dataset.index = newIndex;
+                    piece.dataset.pieceIndex = index;
                     
                     if (newIndex === this.size * this.size - 1) {
                         piece.classList.add('empty');
