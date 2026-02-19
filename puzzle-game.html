@@ -420,12 +420,23 @@
                 piece1.style.backgroundPosition = piece2.style.backgroundPosition;
                 piece2.style.backgroundPosition = tempBg;
                 
-                const tempSize = piece1.style.backgroundSize;
-                piece1.style.backgroundSize = piece2.style.backgroundSize;
-                piece2.style.backgroundSize = tempSize;
-                
                 piece1.classList.toggle('empty');
                 piece2.classList.toggle('empty');
+                
+                // 确保空拼图块的背景大小和位置为空
+                if (piece1.classList.contains('empty')) {
+                    piece1.style.backgroundSize = '';
+                    piece1.style.backgroundPosition = '';
+                } else {
+                    piece1.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
+                }
+                
+                if (piece2.classList.contains('empty')) {
+                    piece2.style.backgroundSize = '';
+                    piece2.style.backgroundPosition = '';
+                } else {
+                    piece2.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
+                }
                 
                 this.emptyPieceIndex = index1;
             }
