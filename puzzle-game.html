@@ -294,7 +294,10 @@
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
                     
-                    piece.addEventListener('click', () => this.handlePieceClick(i));
+                    piece.addEventListener('click', (e) => {
+                        const clickedIndex = Array.from(this.puzzlePieces).indexOf(e.currentTarget);
+                        this.handlePieceClick(clickedIndex);
+                    });
                     this.puzzleGrid.appendChild(piece);
                     this.puzzlePieces.push(piece);
                     this.originalOrder.push(i);
