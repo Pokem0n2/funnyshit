@@ -341,7 +341,7 @@
             
             // 触发MathJax重新渲染
             if (window.MathJax) {
-                MathJax.typesetPromise([previewContent]).catch(err => {
+                MathJax.typesetPromise().catch(err => {
                     console.error('MathJax渲染错误:', err);
                     previewContent.innerHTML = 'LaTeX代码有误，请检查后重试';
                 });
