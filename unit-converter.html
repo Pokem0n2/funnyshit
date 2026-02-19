@@ -555,10 +555,25 @@
             const fromCurrency = document.getElementById('currency-from').value;
             const toCurrency = document.getElementById('currency-to').value;
             
-            // 转换为人民币
-            const cnyValue = value * exchangeRates[fromCurrency];
-            // 转换为目标货币
-            const result = cnyValue / exchangeRates[toCurrency];
+            let result;
+            if (fromCurrency === toCurrency) {
+                result = value;
+            } else {
+                // 转换为人民币：如果不是人民币，需要用除法（因为exchangeRates是1人民币等于多少该币种）
+                let cnyValue;
+                if (fromCurrency === 'CNY') {
+                    cnyValue = value;
+                } else {
+                    cnyValue = value / exchangeRates[fromCurrency];
+                }
+                
+                // 转换为目标货币：如果不是人民币，需要用乘法
+                if (toCurrency === 'CNY') {
+                    result = cnyValue;
+                } else {
+                    result = cnyValue * exchangeRates[toCurrency];
+                }
+            }
             
             // 更新结果
             const fromCurrencyText = document.getElementById('currency-from').options[document.getElementById('currency-from').selectedIndex].text;
