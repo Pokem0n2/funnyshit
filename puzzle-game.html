@@ -294,14 +294,7 @@
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
                     
-                    piece.dataset.pieceIndex = i;
-                    piece.addEventListener('click', (e) => {
-                        const clickedIndex = parseInt(e.currentTarget.dataset.pieceIndex);
-                        console.log('Clicked piece index:', clickedIndex);
-                        console.log('Empty piece index:', this.emptyPieceIndex);
-                        console.log('Is adjacent:', this.isAdjacent(clickedIndex, this.emptyPieceIndex));
-                        this.handlePieceClick(clickedIndex);
-                    });
+                    piece.addEventListener('click', () => this.handlePieceClick(i));
                     this.puzzleGrid.appendChild(piece);
                     this.puzzlePieces.push(piece);
                     this.originalOrder.push(i);
@@ -325,12 +318,9 @@
                 this.puzzlePieces.forEach((piece, index) => {
                     const newIndex = numbers[index];
                     piece.dataset.index = newIndex;
-                    piece.dataset.pieceIndex = index;
                     
                     if (newIndex === this.size * this.size - 1) {
                         piece.classList.add('empty');
-                        piece.style.backgroundSize = '';
-                        piece.style.backgroundPosition = '';
                         this.emptyPieceIndex = index;
                     } else {
                         piece.classList.remove('empty');
@@ -373,12 +363,8 @@
             handlePieceClick(index) {
                 if (!this.isPlaying) return;
                 
-                console.log('Clicked piece index:', index);
-                console.log('Empty piece index:', this.emptyPieceIndex);
-                console.log('Is adjacent:', this.isAdjacent(index, this.emptyPieceIndex));
-                
                 if (this.isAdjacent(index, this.emptyPieceIndex)) {
-                    this.swapPieces(index, this.emptyPieceIndex);
+                    this.movePiece(index, this.emptyPieceIndex);
                     this.moves++;
                     this.movesElement.textContent = this.moves;
                     
@@ -404,41 +390,30 @@
             }
             
             /**
-             * 交换两个拼图块
-             * @param {number} index1 - 第一个拼图块索引
-             * @param {number} index2 - 第二个拼图块索引
+             * 移动拼图块到空缺位置
+             * @param {number} pieceIndex - 要移动的拼图块索引
+             * @param {number} emptyIndex - 空缺位置索引
              */
-            swapPieces(index1, index2) {
-                const piece1 = this.puzzlePieces[index1];
-                const piece2 = this.puzzlePieces[index2];
+            movePiece(pieceIndex, emptyIndex) {
+                const piece = this.puzzlePieces[pieceIndex];
+                const emptyPiece = this.puzzlePieces[emptyIndex];
                 
-                const tempIndex = piece1.dataset.index;
-                piece1.dataset.index = piece2.dataset.index;
-                piece2.dataset.index = tempIndex;
+                // 保存拼图块的状态
+                const pieceIndexValue = piece.dataset.index;
+                const pieceBgPosition = piece.style.backgroundPosition;
                 
-                const tempBg = piece1.style.backgroundPosition;
-                piece1.style.backgroundPosition = piece2.style.backgroundPosition;
-                piece2.style.backgroundPosition = tempBg;
+                // 移动拼图块到空缺位置
+                emptyPiece.dataset.index = pieceIndexValue;
+                emptyPiece.style.backgroundPosition = pieceBgPosition;
+                emptyPiece.classList.remove('empty');
                 
-                piece1.classList.toggle('empty');
-                piece2.classList.toggle('empty');
+                // 将原拼图块位置设为空缺
+                piece.dataset.index = this.size * this.size - 1;
+                piece.style.backgroundPosition = '';
+                piece.classList.add('empty');
                 
-                // 确保空拼图块的背景大小和位置为空
-                if (piece1.classList.contains('empty')) {
-                    piece1.style.backgroundSize = '';
-                    piece1.style.backgroundPosition = '';
-                } else {
-                    piece1.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
-                }
-                
-                if (piece2.classList.contains('empty')) {
-                    piece2.style.backgroundSize = '';
-                    piece2.style.backgroundPosition = '';
-                } else {
-                    piece2.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
-                }
-                
-                this.emptyPieceIndex = index1;
+                // 更新空缺位置索引
+                this.emptyPieceIndex = pieceIndex;
             }
             
             /**
