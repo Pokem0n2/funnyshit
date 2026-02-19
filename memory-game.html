@@ -227,6 +227,7 @@
             <button id="startBtn">开始游戏</button>
             <button id="resetBtn">重新开始</button>
             <button id="hintBtn">提示</button>
+            <button id="homeBtn">返回首页</button>
         </div>
     </div>
     
@@ -295,6 +296,11 @@
                 this.startBtn.addEventListener('click', () => this.startGame());
                 this.resetBtn.addEventListener('click', () => this.resetGame());
                 this.hintBtn.addEventListener('click', () => this.showHint());
+                
+                // 返回首页按钮
+                document.getElementById('homeBtn').addEventListener('click', () => {
+                    window.location.href = 'index.html';
+                });
             }
             
             /**
