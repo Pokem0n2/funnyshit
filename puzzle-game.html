@@ -297,6 +297,9 @@
                     piece.dataset.pieceIndex = i;
                     piece.addEventListener('click', (e) => {
                         const clickedIndex = parseInt(e.currentTarget.dataset.pieceIndex);
+                        console.log('Clicked piece index:', clickedIndex);
+                        console.log('Empty piece index:', this.emptyPieceIndex);
+                        console.log('Is adjacent:', this.isAdjacent(clickedIndex, this.emptyPieceIndex));
                         this.handlePieceClick(clickedIndex);
                     });
                     this.puzzleGrid.appendChild(piece);
