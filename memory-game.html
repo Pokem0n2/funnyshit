@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>记忆游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 900px;
+            width: 90%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        
+        .info-item {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .memory-container {
+            position: relative;
+            margin: 20px auto;
+        }
+        
+        .memory-grid {
+            display: grid;
+            gap: 10px;
+            margin: 20px auto;
+        }
+        
+        .memory-card {
+            background: rgba(255, 255, 255, 0.3);
+            border: 3px solid white;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .memory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .memory-card.flipped {
+            background: white;
+            color: #f5576c;
+            transform: rotateY(180deg);
+        }
+        
+        .memory-card.matched {
+            background: #4caf50;
+            color: white;
+            cursor: default;
+            animation: pulse 1s ease-in-out;
+        }
+        
+        .memory-card .card-content {
+            font-size: 2rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .memory-card.flipped .card-content,
+        .memory-card.matched .card-content {
+            opacity: 1;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
+            border-radius: 50px;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: white;
+            color: #f5576c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .difficulty-selector {
+            margin: 20px 0;
+        }
+        
+        .difficulty-btn {
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 0.9rem;
+        }
+        
+        .difficulty-btn.active {
+            background: white;
+            color: #f5576c;
+        }
+        
+        .message {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            min-height: 50px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .info-item {
+                font-size: 1rem;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                margin: 0 5px;
+            }
+            
+            .memory-card .card-content {
+                font-size: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .memory-card .card-content {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 记忆游戏</h1>
+        
+        <div class="game-info">
+            <div class="info-item">尝试次数: <span id="attempts">0</span></div>
+            <div class="info-item">匹配数: <span id="matches">0</span></div>
+            <div class="info-item">难度: <span id="difficulty">简单</span></div>
+        </div>
+        
+        <div class="message" id="message">点击开始游戏</div>
+        
+        <div class="memory-container">
+            <div class="memory-grid" id="memoryGrid"></div>
+        </div>
+        
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-size="4">简单 (4x4)</button>
+            <button class="difficulty-btn" data-size="6">中等 (6x6)</button>
+            <button class="difficulty-btn" data-size="8">困难 (8x8)</button>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">开始游戏</button>
+            <button id="resetBtn">重新开始</button>
+            <button id="hintBtn">提示</button>
+        </div>
+    </div>
+    
+    <script>
+        /**
+         * 记忆游戏类
+         */
+        class MemoryGame {
+            /**
+             * 构造函数
+             */
+            constructor() {
+                this.size = 4; // 默认4x4
+                this.memoryGrid = document.getElementById('memoryGrid');
+                this.attemptsElement = document.getElementById('attempts');
+                this.matchesElement = document.getElementById('matches');
+                this.difficultyElement = document.getElementById('difficulty');
+                this.messageElement = document.getElementById('message');
+                this.startBtn = document.getElementById('startBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.hintBtn = document.getElementById('hintBtn');
+                
+                this.attempts = 0;
+                this.matches = 0;
+                this.cards = [];
+                this.flippedCards = [];
+                this.isPlaying = false;
+                this.canFlip = true;
+                this.totalPairs = 0;
+                
+                // 卡片内容 - 使用emoji
+                this.cardContents = [
+                    '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
+                    '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔',
+                    '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉',
+                    '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋'
+                ];
+                
+                this.init();
+            }
+            
+            /**
+             * 初始化游戏
+             */
+            init() {
+                this.setupEventListeners();
+                this.createCards();
+            }
+            
+            /**
+             * 设置事件监听器
+             */
+            setupEventListeners() {
+                // 难度选择
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.size = parseInt(e.target.dataset.size);
+                        this.difficultyElement.textContent = e.target.textContent.split(' ')[0];
+                        this.resetGame();
+                    });
+                });
+                
+                // 控制按钮
+                this.startBtn.addEventListener('click', () => this.startGame());
+                this.resetBtn.addEventListener('click', () => this.resetGame());
+                this.hintBtn.addEventListener('click', () => this.showHint());
+            }
+            
+            /**
+             * 创建卡片
+             */
+            createCards() {
+                this.memoryGrid.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
+                this.memoryGrid.style.gridTemplateRows = `repeat(${this.size}, 1fr)`;
+                
+                this.memoryGrid.innerHTML = '';
+                this.cards = [];
+                this.flippedCards = [];
+                this.attempts = 0;
+                this.matches = 0;
+                this.totalPairs = (this.size * this.size) / 2;
+                
+                this.attemptsElement.textContent = this.attempts;
+                this.matchesElement.textContent = this.matches;
+                
+                // 生成卡片内容
+                const selectedContents = this.cardContents.slice(0, this.totalPairs);
+                const pairedContents = [...selectedContents, ...selectedContents];
+                this.shuffleArray(pairedContents);
+                
+                for (let i = 0; i < this.size * this.size; i++) {
+                    const card = document.createElement('div');
+                    card.className = 'memory-card';
+                    card.dataset.index = i;
+                    
+                    const cardContent = document.createElement('div');
+                    cardContent.className = 'card-content';
+                    cardContent.textContent = pairedContents[i];
+                    
+                    card.appendChild(cardContent);
+                    card.addEventListener('click', () => this.handleCardClick(card));
+                    this.memoryGrid.appendChild(card);
+                    this.cards.push(card);
+                }
+            }
+            
+            /**
+             * 打乱数组
+             * @param {Array} array - 要打乱的数组
+             */
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+            
+            /**
+             * 处理卡片点击
+             * @param {HTMLElement} card - 点击的卡片
+             */
+            handleCardClick(card) {
+                if (!this.isPlaying || !this.canFlip) return;
+                if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+                
+                // 翻转卡片
+                card.classList.add('flipped');
+                this.flippedCards.push(card);
+                
+                // 检查是否翻转了两张卡片
+                if (this.flippedCards.length === 2) {
+                    this.attempts++;
+                    this.attemptsElement.textContent = this.attempts;
+                    this.canFlip = false;
+                    
+                    setTimeout(() => {
+                        this.checkMatch();
+                    }, 1000);
+                }
+            }
+            
+            /**
+             * 检查两张卡片是否匹配
+             */
+            checkMatch() {
+                const [card1, card2] = this.flippedCards;
+                const content1 = card1.querySelector('.card-content').textContent;
+                const content2 = card2.querySelector('.card-content').textContent;
+                
+                if (content1 === content2) {
+                    // 匹配成功
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    this.matches++;
+                    this.matchesElement.textContent = this.matches;
+                    
+                    if (this.matches === this.totalPairs) {
+                        this.endGame(true);
+                    }
+                } else {
+                    // 匹配失败
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                }
+                
+                this.flippedCards = [];
+                this.canFlip = true;
+            }
+            
+            /**
+             * 开始游戏
+             */
+            startGame() {
+                if (!this.isPlaying) {
+                    this.isPlaying = true;
+                    this.createCards();
+                    this.messageElement.textContent = '游戏开始！记住卡片位置';
+                    this.startBtn.textContent = '暂停游戏';
+                } else {
+                    this.pauseGame();
+                }
+            }
+            
+            /**
+             * 暂停游戏
+             */
+            pauseGame() {
+                this.isPlaying = false;
+                this.messageElement.textContent = '游戏已暂停';
+                this.startBtn.textContent = '继续游戏';
+            }
+            
+            /**
+             * 重置游戏
+             */
+            resetGame() {
+                this.isPlaying = false;
+                this.createCards();
+                this.messageElement.textContent = '点击开始游戏';
+                this.startBtn.textContent = '开始游戏';
+            }
+            
+            /**
+             * 结束游戏
+             * @param {boolean} isWin - 是否获胜
+             */
+            endGame(isWin) {
+                this.isPlaying = false;
+                
+                if (isWin) {
+                    this.messageElement.textContent = `恭喜获胜！共尝试 ${this.attempts} 次`;
+                } else {
+                    this.messageElement.textContent = '游戏结束';
+                }
+                
+                this.startBtn.textContent = '开始游戏';
+            }
+            
+            /**
+             * 显示提示
+             */
+            showHint() {
+                if (!this.isPlaying) return;
+                
+                // 找到一对未匹配的卡片
+                const unmatchedCards = this.cards.filter(card => !card.classList.contains('matched'));
+                if (unmatchedCards.length < 2) return;
+                
+                // 随机选择一对匹配的卡片
+                const contents = {};
+                for (const card of unmatchedCards) {
+                    const content = card.querySelector('.card-content').textContent;
+                    if (!contents[content]) {
+                        contents[content] = [];
+                    }
+                    contents[content].push(card);
+                }
+                
+                // 找到有两张卡片的内容
+                let matchingPair = null;
+                for (const content in contents) {
+                    if (contents[content].length === 2) {
+                        matchingPair = contents[content];
+                        break;
+                    }
+                }
+                
+                if (matchingPair) {
+                    // 短暂显示这对卡片
+                    matchingPair.forEach(card => {
+                        if (!card.classList.contains('flipped')) {
+                            card.classList.add('flipped');
+                            setTimeout(() => {
+                                card.classList.remove('flipped');
+                            }, 2000);
+                        }
+                    });
+                }
+            }
+        }
+        
+        // 初始化游戏
+        window.addEventListener('DOMContentLoaded', () => {
+            new MemoryGame();
+        });
+    </script>
+</body>
+</html>

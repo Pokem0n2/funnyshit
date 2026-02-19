@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拼图游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        
+        .info-item {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .puzzle-container {
+            position: relative;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        .puzzle-grid {
+            display: grid;
+            gap: 2px;
+            background: #333;
+            padding: 2px;
+            border-radius: 10px;
+        }
+        
+        .puzzle-piece {
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            position: relative;
+        }
+        
+        .puzzle-piece:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .puzzle-piece.empty {
+            background: #333;
+            cursor: default;
+        }
+        
+        .puzzle-piece.empty:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid white;
+            border-radius: 50px;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: white;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .difficulty-selector {
+            margin: 20px 0;
+        }
+        
+        .difficulty-btn {
+            padding: 8px 16px;
+            margin: 0 5px;
+            font-size: 0.9rem;
+        }
+        
+        .difficulty-btn.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .message {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            min-height: 50px;
+        }
+        
+        .timer {
+            font-family: 'Courier New', monospace;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .info-item {
+                font-size: 1rem;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+                margin: 0 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 交互式拼图游戏</h1>
+        
+        <div class="game-info">
+            <div class="info-item">步数: <span id="moves">0</span></div>
+            <div class="info-item timer">时间: <span id="time">00:00</span></div>
+            <div class="info-item">难度: <span id="difficulty">简单</span></div>
+        </div>
+        
+        <div class="message" id="message">点击开始游戏</div>
+        
+        <div class="puzzle-container">
+            <div class="puzzle-grid" id="puzzleGrid"></div>
+        </div>
+        
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-size="3">简单 (3x3)</button>
+            <button class="difficulty-btn" data-size="4">中等 (4x4)</button>
+            <button class="difficulty-btn" data-size="5">困难 (5x5)</button>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">开始游戏</button>
+            <button id="resetBtn">重新开始</button>
+            <button id="hintBtn">提示</button>
+        </div>
+    </div>
+    
+    <script>
+        /**
+         * 拼图游戏类
+         */
+        class PuzzleGame {
+            /**
+             * 构造函数
+             */
+            constructor() {
+                this.size = 3; // 默认3x3
+                this.puzzleGrid = document.getElementById('puzzleGrid');
+                this.movesElement = document.getElementById('moves');
+                this.timeElement = document.getElementById('time');
+                this.difficultyElement = document.getElementById('difficulty');
+                this.messageElement = document.getElementById('message');
+                this.startBtn = document.getElementById('startBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.hintBtn = document.getElementById('hintBtn');
+                
+                this.moves = 0;
+                this.time = 0;
+                this.timerInterval = null;
+                this.isPlaying = false;
+                this.emptyPieceIndex = -1;
+                this.puzzlePieces = [];
+                this.originalOrder = [];
+                
+                this.init();
+            }
+            
+            /**
+             * 初始化游戏
+             */
+            init() {
+                this.setupEventListeners();
+                this.createPuzzle();
+            }
+            
+            /**
+             * 设置事件监听器
+             */
+            setupEventListeners() {
+                // 难度选择
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.size = parseInt(e.target.dataset.size);
+                        this.difficultyElement.textContent = e.target.textContent.split(' ')[0];
+                        this.resetGame();
+                    });
+                });
+                
+                // 控制按钮
+                this.startBtn.addEventListener('click', () => this.startGame());
+                this.resetBtn.addEventListener('click', () => this.resetGame());
+                this.hintBtn.addEventListener('click', () => this.showHint());
+            }
+            
+            /**
+             * 创建拼图
+             */
+            createPuzzle() {
+                this.puzzleGrid.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
+                this.puzzleGrid.style.gridTemplateRows = `repeat(${this.size}, 1fr)`;
+                this.puzzleGrid.style.width = `${Math.min(500, window.innerWidth * 0.8)}px`;
+                this.puzzleGrid.style.height = `${Math.min(500, window.innerWidth * 0.8)}px`;
+                
+                this.puzzleGrid.innerHTML = '';
+                this.puzzlePieces = [];
+                this.originalOrder = [];
+                
+                const imageUrl = `https://picsum.photos/800/800?random=${Math.floor(Math.random() * 1000)}`;
+                
+                for (let i = 0; i < this.size * this.size; i++) {
+                    const piece = document.createElement('div');
+                    piece.className = 'puzzle-piece';
+                    piece.dataset.index = i;
+                    
+                    if (i === this.size * this.size - 1) {
+                        piece.classList.add('empty');
+                        this.emptyPieceIndex = i;
+                    } else {
+                        const row = Math.floor(i / this.size);
+                        const col = i % this.size;
+                        piece.style.backgroundImage = `url(${imageUrl})`;
+                        piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
+                    }
+                    
+                    piece.addEventListener('click', () => this.handlePieceClick(i));
+                    this.puzzleGrid.appendChild(piece);
+                    this.puzzlePieces.push(piece);
+                    this.originalOrder.push(i);
+                }
+            }
+            
+            /**
+             * 打乱拼图
+             */
+            shufflePuzzle() {
+                const numbers = Array.from({ length: this.size * this.size }, (_, i) => i);
+                
+                // 确保拼图可解
+                do {
+                    for (let i = numbers.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+                    }
+                } while (!this.isSolvable(numbers) || this.isSolved(numbers));
+                
+                this.puzzlePieces.forEach((piece, index) => {
+                    const newIndex = numbers[index];
+                    piece.dataset.index = newIndex;
+                    
+                    if (newIndex === this.size * this.size - 1) {
+                        piece.classList.add('empty');
+                        this.emptyPieceIndex = index;
+                    } else {
+                        piece.classList.remove('empty');
+                        const row = Math.floor(newIndex / this.size);
+                        const col = newIndex % this.size;
+                        piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
+                    }
+                });
+            }
+            
+            /**
+             * 检查拼图是否可解
+             * @param {Array} numbers - 拼图数字数组
+             * @returns {boolean} - 是否可解
+             */
+            isSolvable(numbers) {
+                let inversions = 0;
+                
+                for (let i = 0; i < numbers.length; i++) {
+                    for (let j = i + 1; j < numbers.length; j++) {
+                        if (numbers[i] !== numbers.length - 1 && numbers[j] !== numbers.length - 1 && numbers[i] > numbers[j]) {
+                            inversions++;
+                        }
+                    }
+                }
+                
+                if (this.size % 2 === 1) {
+                    return inversions % 2 === 0;
+                } else {
+                    const emptyRow = Math.floor(numbers.indexOf(numbers.length - 1) / this.size);
+                    return (inversions + emptyRow) % 2 === 1;
+                }
+            }
+            
+            /**
+             * 处理拼图块点击
+             * @param {number} index - 点击的拼图块索引
+             */
+            handlePieceClick(index) {
+                if (!this.isPlaying) return;
+                
+                if (this.isAdjacent(index, this.emptyPieceIndex)) {
+                    this.swapPieces(index, this.emptyPieceIndex);
+                    this.moves++;
+                    this.movesElement.textContent = this.moves;
+                    
+                    if (this.checkWin()) {
+                        this.endGame(true);
+                    }
+                }
+            }
+            
+            /**
+             * 检查两个拼图块是否相邻
+             * @param {number} index1 - 第一个拼图块索引
+             * @param {number} index2 - 第二个拼图块索引
+             * @returns {boolean} - 是否相邻
+             */
+            isAdjacent(index1, index2) {
+                const row1 = Math.floor(index1 / this.size);
+                const col1 = index1 % this.size;
+                const row2 = Math.floor(index2 / this.size);
+                const col2 = index2 % this.size;
+                
+                return (Math.abs(row1 - row2) === 1 && col1 === col2) || (Math.abs(col1 - col2) === 1 && row1 === row2);
+            }
+            
+            /**
+             * 交换两个拼图块
+             * @param {number} index1 - 第一个拼图块索引
+             * @param {number} index2 - 第二个拼图块索引
+             */
+            swapPieces(index1, index2) {
+                const piece1 = this.puzzlePieces[index1];
+                const piece2 = this.puzzlePieces[index2];
+                
+                const tempIndex = piece1.dataset.index;
+                piece1.dataset.index = piece2.dataset.index;
+                piece2.dataset.index = tempIndex;
+                
+                const tempBg = piece1.style.backgroundPosition;
+                piece1.style.backgroundPosition = piece2.style.backgroundPosition;
+                piece2.style.backgroundPosition = tempBg;
+                
+                piece1.classList.toggle('empty');
+                piece2.classList.toggle('empty');
+                
+                this.emptyPieceIndex = index1;
+            }
+            
+            /**
+             * 检查是否获胜
+             * @returns {boolean} - 是否获胜
+             */
+            checkWin() {
+                for (let i = 0; i < this.puzzlePieces.length; i++) {
+                    if (parseInt(this.puzzlePieces[i].dataset.index) !== i) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            
+            /**
+             * 检查数组是否已排序
+             * @param {Array} numbers - 数字数组
+             * @returns {boolean} - 是否已排序
+             */
+            isSolved(numbers) {
+                for (let i = 0; i < numbers.length; i++) {
+                    if (numbers[i] !== i) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            
+            /**
+             * 开始游戏
+             */
+            startGame() {
+                if (!this.isPlaying) {
+                    this.isPlaying = true;
+                    this.shufflePuzzle();
+                    this.moves = 0;
+                    this.movesElement.textContent = this.moves;
+                    this.time = 0;
+                    this.updateTime();
+                    this.startTimer();
+                    this.messageElement.textContent = '游戏开始！';
+                    this.startBtn.textContent = '暂停游戏';
+                } else {
+                    this.pauseGame();
+                }
+            }
+            
+            /**
+             * 暂停游戏
+             */
+            pauseGame() {
+                this.isPlaying = false;
+                this.stopTimer();
+                this.messageElement.textContent = '游戏已暂停';
+                this.startBtn.textContent = '继续游戏';
+            }
+            
+            /**
+             * 重置游戏
+             */
+            resetGame() {
+                this.isPlaying = false;
+                this.stopTimer();
+                this.createPuzzle();
+                this.moves = 0;
+                this.movesElement.textContent = this.moves;
+                this.time = 0;
+                this.updateTime();
+                this.messageElement.textContent = '点击开始游戏';
+                this.startBtn.textContent = '开始游戏';
+            }
+            
+            /**
+             * 结束游戏
+             * @param {boolean} isWin - 是否获胜
+             */
+            endGame(isWin) {
+                this.isPlaying = false;
+                this.stopTimer();
+                
+                if (isWin) {
+                    this.messageElement.textContent = `恭喜获胜！用时 ${this.formatTime(this.time)}，步数 ${this.moves}`;
+                } else {
+                    this.messageElement.textContent = '游戏结束';
+                }
+                
+                this.startBtn.textContent = '开始游戏';
+            }
+            
+            /**
+             * 显示提示
+             */
+            showHint() {
+                if (!this.isPlaying) return;
+                
+                // 找到一个可移动的拼图块
+                for (let i = 0; i < this.puzzlePieces.length; i++) {
+                    if (i !== this.emptyPieceIndex && this.isAdjacent(i, this.emptyPieceIndex)) {
+                        const piece = this.puzzlePieces[i];
+                        piece.style.animation = 'hint 1s ease-in-out';
+                        setTimeout(() => {
+                            piece.style.animation = '';
+                        }, 1000);
+                        break;
+                    }
+                }
+            }
+            
+            /**
+             * 开始计时器
+             */
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    this.time++;
+                    this.updateTime();
+                }, 1000);
+            }
+            
+            /**
+             * 停止计时器
+             */
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+            
+            /**
+             * 更新时间显示
+             */
+            updateTime() {
+                this.timeElement.textContent = this.formatTime(this.time);
+            }
+            
+            /**
+             * 格式化时间
+             * @param {number} seconds - 秒数
+             * @returns {string} - 格式化后的时间字符串
+             */
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
+        
+        // 添加提示动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes hint {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); box-shadow: 0 0 20px #ffeb3b; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 初始化游戏
+        window.addEventListener('DOMContentLoaded', () => {
+            new PuzzleGame();
+        });
+    </script>
+</body>
+</html>
