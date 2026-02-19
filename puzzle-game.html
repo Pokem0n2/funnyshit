@@ -167,21 +167,6 @@
                 margin: 0 5px;
             }
         }
-        
-        @keyframes hint {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); box-shadow: 0 0 20px #ffeb3b; }
-        }
-        
-        @keyframes win {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        
-        .win-animation {
-            animation: win 1s ease-in-out;
-        }
     </style>
 </head>
 <body>
@@ -239,8 +224,7 @@
                 this.isPlaying = false;
                 this.emptyPieceIndex = -1;
                 this.puzzlePieces = [];
-                this.originalOrder = [];
-                this.imageUrl = 'https://picsum.photos/800/800?image=10'; // 使用固定图片
+                this.imageUrl = '';
                 
                 this.init();
             }
@@ -290,12 +274,14 @@
                 
                 this.puzzleGrid.innerHTML = '';
                 this.puzzlePieces = [];
-                this.originalOrder = [];
+                
+                // 生成新的随机图片
+                this.imageUrl = `https://picsum.photos/800/800?random=${Math.floor(Math.random() * 1000)}`;
                 
                 for (let i = 0; i < this.size * this.size; i++) {
                     const piece = document.createElement('div');
                     piece.className = 'puzzle-piece';
-                    piece.dataset.index = i;
+                    piece.dataset.position = i; // 存储拼图块的正确位置
                     
                     if (i === this.size * this.size - 1) {
                         piece.classList.add('empty');
@@ -304,7 +290,6 @@
                         const row = Math.floor(i / this.size);
                         const col = i % this.size;
                         piece.style.backgroundImage = `url(${this.imageUrl})`;
-                        // 正确计算背景大小和位置
                         piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
@@ -312,7 +297,6 @@
                     piece.addEventListener('click', () => this.handlePieceClick(i));
                     this.puzzleGrid.appendChild(piece);
                     this.puzzlePieces.push(piece);
-                    this.originalOrder.push(i);
                 }
             }
             
@@ -320,29 +304,33 @@
              * 打乱拼图
              */
             shufflePuzzle() {
-                const numbers = Array.from({ length: this.size * this.size }, (_, i) => i);
+                // 创建一个包含所有拼图块索引的数组
+                const positions = Array.from({ length: this.size * this.size }, (_, i) => i);
                 
-                // 确保拼图可解且不是已完成状态
+                // 确保拼图可解
                 do {
-                    for (let i = numbers.length - 1; i > 0; i--) {
+                    // 随机打乱数组
+                    for (let i = positions.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
-                        [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+                        [positions[i], positions[j]] = [positions[j], positions[i]];
                     }
-                } while (!this.isSolvable(numbers) || this.isSolved(numbers));
+                } while (!this.isSolvable(positions) || this.isSolved(positions));
                 
+                // 根据打乱后的顺序重新排列拼图块
                 this.puzzlePieces.forEach((piece, index) => {
-                    const newIndex = numbers[index];
-                    piece.dataset.index = newIndex;
+                    const newPosition = positions[index];
+                    piece.dataset.position = newPosition;
                     
-                    if (newIndex === this.size * this.size - 1) {
+                    if (newPosition === this.size * this.size - 1) {
                         piece.classList.add('empty');
                         this.emptyPieceIndex = index;
+                        piece.style.backgroundImage = 'none';
                     } else {
                         piece.classList.remove('empty');
                         piece.style.backgroundImage = `url(${this.imageUrl})`;
                         piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
-                        const row = Math.floor(newIndex / this.size);
-                        const col = newIndex % this.size;
+                        const row = Math.floor(newPosition / this.size);
+                        const col = newPosition % this.size;
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
                 });
@@ -350,15 +338,15 @@
             
             /**
              * 检查拼图是否可解
-             * @param {Array} numbers - 拼图数字数组
+             * @param {Array} positions - 拼图位置数组
              * @returns {boolean} - 是否可解
              */
-            isSolvable(numbers) {
+            isSolvable(positions) {
                 let inversions = 0;
                 
-                for (let i = 0; i < numbers.length; i++) {
-                    for (let j = i + 1; j < numbers.length; j++) {
-                        if (numbers[i] !== numbers.length - 1 && numbers[j] !== numbers.length - 1 && numbers[i] > numbers[j]) {
+                for (let i = 0; i < positions.length; i++) {
+                    for (let j = i + 1; j < positions.length; j++) {
+                        if (positions[i] !== positions.length - 1 && positions[j] !== positions.length - 1 && positions[i] > positions[j]) {
                             inversions++;
                         }
                     }
@@ -367,7 +355,7 @@
                 if (this.size % 2 === 1) {
                     return inversions % 2 === 0;
                 } else {
-                    const emptyRow = Math.floor(numbers.indexOf(numbers.length - 1) / this.size);
+                    const emptyRow = Math.floor(positions.indexOf(positions.length - 1) / this.size);
                     return (inversions + emptyRow) % 2 === 1;
                 }
             }
@@ -379,11 +367,13 @@
             handlePieceClick(index) {
                 if (!this.isPlaying) return;
                 
+                // 检查点击的拼图块是否与空白块相邻
                 if (this.isAdjacent(index, this.emptyPieceIndex)) {
                     this.swapPieces(index, this.emptyPieceIndex);
                     this.moves++;
                     this.movesElement.textContent = this.moves;
                     
+                    // 检查是否获胜
                     if (this.checkWin()) {
                         this.endGame(true);
                     }
@@ -397,11 +387,13 @@
              * @returns {boolean} - 是否相邻
              */
             isAdjacent(index1, index2) {
+                // 计算两个拼图块的行列位置
                 const row1 = Math.floor(index1 / this.size);
                 const col1 = index1 % this.size;
                 const row2 = Math.floor(index2 / this.size);
                 const col2 = index2 % this.size;
                 
+                // 检查是否相邻（上下或左右）
                 return (Math.abs(row1 - row2) === 1 && col1 === col2) || (Math.abs(col1 - col2) === 1 && row1 === row2);
             }
             
@@ -414,17 +406,25 @@
                 const piece1 = this.puzzlePieces[index1];
                 const piece2 = this.puzzlePieces[index2];
                 
-                // 交换索引
-                const tempIndex = piece1.dataset.index;
-                piece1.dataset.index = piece2.dataset.index;
-                piece2.dataset.index = tempIndex;
+                // 交换位置数据
+                const tempPosition = piece1.dataset.position;
+                piece1.dataset.position = piece2.dataset.position;
+                piece2.dataset.position = tempPosition;
                 
-                // 交换背景位置
-                const tempBg = piece1.style.backgroundPosition;
+                // 交换样式
+                const tempBgImage = piece1.style.backgroundImage;
+                const tempBgPosition = piece1.style.backgroundPosition;
+                const tempBgSize = piece1.style.backgroundSize;
+                
+                piece1.style.backgroundImage = piece2.style.backgroundImage;
                 piece1.style.backgroundPosition = piece2.style.backgroundPosition;
-                piece2.style.backgroundPosition = tempBg;
+                piece1.style.backgroundSize = piece2.style.backgroundSize;
                 
-                // 交换empty类
+                piece2.style.backgroundImage = tempBgImage;
+                piece2.style.backgroundPosition = tempBgPosition;
+                piece2.style.backgroundSize = tempBgSize;
+                
+                // 交换空块类
                 piece1.classList.toggle('empty');
                 piece2.classList.toggle('empty');
                 
@@ -438,7 +438,7 @@
              */
             checkWin() {
                 for (let i = 0; i < this.puzzlePieces.length; i++) {
-                    if (parseInt(this.puzzlePieces[i].dataset.index) !== i) {
+                    if (parseInt(this.puzzlePieces[i].dataset.position) !== i) {
                         return false;
                     }
                 }
@@ -447,12 +447,12 @@
             
             /**
              * 检查数组是否已排序
-             * @param {Array} numbers - 数字数组
+             * @param {Array} positions - 位置数组
              * @returns {boolean} - 是否已排序
              */
-            isSolved(numbers) {
-                for (let i = 0; i < numbers.length; i++) {
-                    if (numbers[i] !== i) {
+            isSolved(positions) {
+                for (let i = 0; i < positions.length; i++) {
+                    if (positions[i] !== i) {
                         return false;
                     }
                 }
@@ -471,7 +471,7 @@
                     this.time = 0;
                     this.updateTime();
                     this.startTimer();
-                    this.messageElement.textContent = '游戏开始！';
+                    this.messageElement.textContent = '游戏开始！点击空白块旁边的拼图块来移动它。';
                     this.startBtn.textContent = '暂停游戏';
                 } else {
                     this.pauseGame();
@@ -513,11 +513,16 @@
                 
                 if (isWin) {
                     this.messageElement.textContent = `恭喜获胜！用时 ${this.formatTime(this.time)}，步数 ${this.moves}`;
-                    // 添加获胜动画
-                    this.puzzleGrid.classList.add('win-animation');
-                    setTimeout(() => {
-                        this.puzzleGrid.classList.remove('win-animation');
-                    }, 1000);
+                    // 显示完整图片
+                    this.puzzlePieces.forEach(piece => {
+                        piece.classList.remove('empty');
+                        const position = parseInt(piece.dataset.position);
+                        const row = Math.floor(position / this.size);
+                        const col = position % this.size;
+                        piece.style.backgroundImage = `url(${this.imageUrl})`;
+                        piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
+                        piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
+                    });
                 } else {
                     this.messageElement.textContent = '游戏结束';
                 }
@@ -531,7 +536,7 @@
             showHint() {
                 if (!this.isPlaying) return;
                 
-                // 找到一个可移动的拼图块
+                // 找到一个可移动的拼图块并高亮显示
                 for (let i = 0; i < this.puzzlePieces.length; i++) {
                     if (i !== this.emptyPieceIndex && this.isAdjacent(i, this.emptyPieceIndex)) {
                         const piece = this.puzzlePieces[i];
@@ -539,6 +544,7 @@
                         setTimeout(() => {
                             piece.style.animation = '';
                         }, 1000);
+                        this.messageElement.textContent = '提示：点击高亮的拼图块来移动它。';
                         break;
                     }
                 }
@@ -582,6 +588,16 @@
                 return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             }
         }
+        
+        // 添加提示动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes hint {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); box-shadow: 0 0 20px #ffeb3b; }
+            }
+        `;
+        document.head.appendChild(style);
         
         // 初始化游戏
         window.addEventListener('DOMContentLoaded', () => {
