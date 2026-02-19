@@ -272,6 +272,10 @@
                 this.puzzleGrid.style.width = `${Math.min(500, window.innerWidth * 0.8)}px`;
                 this.puzzleGrid.style.height = `${Math.min(500, window.innerWidth * 0.8)}px`;
                 
+                // 让 puzzle-container 的宽度与 puzzle-grid 保持一致，避免右侧空白
+                const puzzleContainer = this.puzzleGrid.parentElement;
+                puzzleContainer.style.width = this.puzzleGrid.style.width;
+                
                 this.puzzleGrid.innerHTML = '';
                 this.puzzlePieces = [];
                 
