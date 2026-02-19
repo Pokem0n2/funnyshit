@@ -116,8 +116,8 @@
         }
         
         button {
-            background: rgba(255, 255, 255, 0.3);
-            border: 2px solid white;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            border: none;
             border-radius: 50px;
             color: white;
             padding: 12px 24px;
@@ -126,13 +126,13 @@
             cursor: pointer;
             margin: 0 10px;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
         button:hover {
-            background: white;
-            color: #f5576c;
+            background: linear-gradient(135deg, #38f9d7 0%, #43e97b 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
         
         button:active {
@@ -150,8 +150,8 @@
         }
         
         .difficulty-btn.active {
-            background: white;
-            color: #f5576c;
+            background: linear-gradient(135deg, #38f9d7 0%, #43e97b 100%);
+            color: white;
         }
         
         .message {

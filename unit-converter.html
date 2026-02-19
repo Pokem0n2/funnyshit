@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单位&汇率换算</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .converter-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+        
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #f5576c;
+        }
+        
+        .converter-content {
+            display: none;
+        }
+        
+        .converter-content.active {
+            display: block;
+        }
+        
+        .converter-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .converter-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .converter-body {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .input-group label {
+            font-weight: bold;
+            min-width: 80px;
+            text-align: left;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        .input-group select {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            min-width: 120px;
+        }
+        
+        .swap-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .swap-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: rotate(180deg);
+        }
+        
+        .result {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .controls {
+            margin-top: 30px;
+        }
+        
+        .home-btn {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .home-btn:hover {
+            background: linear-gradient(135deg, #38f9d7 0%, #43e97b 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .converter-tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group label {
+                text-align: center;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📏 单位&汇率换算</h1>
+        
+        <div class="converter-tabs">
+            <button class="tab-btn active" onclick="switchTab('length')">长度</button>
+            <button class="tab-btn" onclick="switchTab('weight')">重量</button>
+            <button class="tab-btn" onclick="switchTab('temperature')">温度</button>
+            <button class="tab-btn" onclick="switchTab('currency')">汇率</button>
+        </div>
+        
+        <!-- 长度换算 -->
+        <div class="converter-content active" id="length">
+            <div class="converter-card">
+                <div class="converter-header">长度换算</div>
+                <div class="converter-body">
+                    <div class="input-group">
+                        <label>数值:</label>
+                        <input type="number" id="length-value" value="1" step="any" oninput="convertLength()">
+                    </div>
+                    <div class="input-group">
+                        <label>从:</label>
+                        <select id="length-from" onchange="convertLength()">
+                            <option value="meter">米 (m)</option>
+                            <option value="kilometer">千米 (km)</option>
+                            <option value="centimeter">厘米 (cm)</option>
+                            <option value="millimeter">毫米 (mm)</option>
+                            <option value="mile">英里 (mi)</option>
+                            <option value="foot">英尺 (ft)</option>
+                            <option value="inch">英寸 (in)</option>
+                        </select>
+                        <button class="swap-btn" onclick="swapLengthUnits()">⇄</button>
+                        <label>到:</label>
+                        <select id="length-to" onchange="convertLength()">
+                            <option value="meter">米 (m)</option>
+                            <option value="kilometer">千米 (km)</option>
+                            <option value="centimeter">厘米 (cm)</option>
+                            <option value="millimeter">毫米 (mm)</option>
+                            <option value="mile">英里 (mi)</option>
+                            <option value="foot">英尺 (ft)</option>
+                            <option value="inch">英寸 (in)</option>
+                        </select>
+                    </div>
+                    <div class="result" id="length-result">1 米 = 1 米</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 重量换算 -->
+        <div class="converter-content" id="weight">
+            <div class="converter-card">
+                <div class="converter-header">重量换算</div>
+                <div class="converter-body">
+                    <div class="input-group">
+                        <label>数值:</label>
+                        <input type="number" id="weight-value" value="1" step="any" oninput="convertWeight()">
+                    </div>
+                    <div class="input-group">
+                        <label>从:</label>
+                        <select id="weight-from" onchange="convertWeight()">
+                            <option value="kilogram">千克 (kg)</option>
+                            <option value="gram">克 (g)</option>
+                            <option value="milligram">毫克 (mg)</option>
+                            <option value="pound">磅 (lb)</option>
+                            <option value="ounce">盎司 (oz)</option>
+                        </select>
+                        <button class="swap-btn" onclick="swapWeightUnits()">⇄</button>
+                        <label>到:</label>
+                        <select id="weight-to" onchange="convertWeight()">
+                            <option value="kilogram">千克 (kg)</option>
+                            <option value="gram">克 (g)</option>
+                            <option value="milligram">毫克 (mg)</option>
+                            <option value="pound">磅 (lb)</option>
+                            <option value="ounce">盎司 (oz)</option>
+                        </select>
+                    </div>
+                    <div class="result" id="weight-result">1 千克 = 1 千克</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 温度换算 -->
+        <div class="converter-content" id="temperature">
+            <div class="converter-card">
+                <div class="converter-header">温度换算</div>
+                <div class="converter-body">
+                    <div class="input-group">
+                        <label>数值:</label>
+                        <input type="number" id="temperature-value" value="0" step="any" oninput="convertTemperature()">
+                    </div>
+                    <div class="input-group">
+                        <label>从:</label>
+                        <select id="temperature-from" onchange="convertTemperature()">
+                            <option value="celsius">摄氏度 (°C)</option>
+                            <option value="fahrenheit">华氏度 (°F)</option>
+                            <option value="kelvin">开尔文 (K)</option>
+                        </select>
+                        <button class="swap-btn" onclick="swapTemperatureUnits()">⇄</button>
+                        <label>到:</label>
+                        <select id="temperature-to" onchange="convertTemperature()">
+                            <option value="celsius">摄氏度 (°C)</option>
+                            <option value="fahrenheit">华氏度 (°F)</option>
+                            <option value="kelvin">开尔文 (K)</option>
+                        </select>
+                    </div>
+                    <div class="result" id="temperature-result">0 摄氏度 = 0 摄氏度</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 汇率换算 -->
+        <div class="converter-content" id="currency">
+            <div class="converter-card">
+                <div class="converter-header">汇率换算</div>
+                <div class="converter-body">
+                    <div class="input-group">
+                        <label>数值:</label>
+                        <input type="number" id="currency-value" value="1" step="any" oninput="convertCurrency()">
+                    </div>
+                    <div class="input-group">
+                        <label>从:</label>
+                        <select id="currency-from" onchange="convertCurrency()">
+                            <option value="CNY">人民币 (CNY)</option>
+                            <option value="USD">美元 (USD)</option>
+                            <option value="EUR">欧元 (EUR)</option>
+                            <option value="GBP">英镑 (GBP)</option>
+                            <option value="JPY">日元 (JPY)</option>
+                            <option value="KRW">韩元 (KRW)</option>
+                        </select>
+                        <button class="swap-btn" onclick="swapCurrencyUnits()">⇄</button>
+                        <label>到:</label>
+                        <select id="currency-to" onchange="convertCurrency()">
+                            <option value="CNY">人民币 (CNY)</option>
+                            <option value="USD">美元 (USD)</option>
+                            <option value="EUR">欧元 (EUR)</option>
+                            <option value="GBP">英镑 (GBP)</option>
+                            <option value="JPY">日元 (JPY)</option>
+                            <option value="KRW">韩元 (KRW)</option>
+                        </select>
+                    </div>
+                    <div class="result" id="currency-result">1 人民币 = 1 人民币</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="home-btn" onclick="goHome()">返回首页</button>
+        </div>
+    </div>
+    
+    <script>
+        /**
+         * 单位&汇率换算功能
+         */
+        
+        // 汇率数据（模拟数据，实际应用中应从API获取）
+        const exchangeRates = {
+            CNY: 1,
+            USD: 0.14,
+            EUR: 0.13,
+            GBP: 0.11,
+            JPY: 20.27,
+            KRW: 187.45
+        };
+        
+        /**
+         * 切换标签
+         * @param {string} tab - 标签名称
+         */
+        function switchTab(tab) {
+            // 隐藏所有内容
+            document.querySelectorAll('.converter-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有标签的激活状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示选中的内容和激活标签
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        /**
+         * 长度换算
+         */
+        function convertLength() {
+            const value = parseFloat(document.getElementById('length-value').value) || 0;
+            const fromUnit = document.getElementById('length-from').value;
+            const toUnit = document.getElementById('length-to').value;
+            
+            // 转换为米
+            let meters;
+            switch(fromUnit) {
+                case 'meter': meters = value;
+                    break;
+                case 'kilometer': meters = value * 1000;
+                    break;
+                case 'centimeter': meters = value / 100;
+                    break;
+                case 'millimeter': meters = value / 1000;
+                    break;
+                case 'mile': meters = value * 1609.34;
+                    break;
+                case 'foot': meters = value * 0.3048;
+                    break;
+                case 'inch': meters = value * 0.0254;
+                    break;
+            }
+            
+            // 转换为目标单位
+            let result;
+            switch(toUnit) {
+                case 'meter': result = meters;
+                    break;
+                case 'kilometer': result = meters / 1000;
+                    break;
+                case 'centimeter': result = meters * 100;
+                    break;
+                case 'millimeter': result = meters * 1000;
+                    break;
+                case 'mile': result = meters / 1609.34;
+                    break;
+                case 'foot': result = meters / 0.3048;
+                    break;
+                case 'inch': result = meters / 0.0254;
+                    break;
+            }
+            
+            // 更新结果
+            const fromUnitText = document.getElementById('length-from').options[document.getElementById('length-from').selectedIndex].text;
+            const toUnitText = document.getElementById('length-to').options[document.getElementById('length-to').selectedIndex].text;
+            document.getElementById('length-result').textContent = `${value} ${fromUnitText} = ${result.toFixed(4)} ${toUnitText}`;
+        }
+        
+        /**
+         * 交换长度单位
+         */
+        function swapLengthUnits() {
+            const fromSelect = document.getElementById('length-from');
+            const toSelect = document.getElementById('length-to');
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            convertLength();
+        }
+        
+        /**
+         * 重量换算
+         */
+        function convertWeight() {
+            const value = parseFloat(document.getElementById('weight-value').value) || 0;
+            const fromUnit = document.getElementById('weight-from').value;
+            const toUnit = document.getElementById('weight-to').value;
+            
+            // 转换为千克
+            let kilograms;
+            switch(fromUnit) {
+                case 'kilogram': kilograms = value;
+                    break;
+                case 'gram': kilograms = value / 1000;
+                    break;
+                case 'milligram': kilograms = value / 1000000;
+                    break;
+                case 'pound': kilograms = value * 0.453592;
+                    break;
+                case 'ounce': kilograms = value * 0.0283495;
+                    break;
+            }
+            
+            // 转换为目标单位
+            let result;
+            switch(toUnit) {
+                case 'kilogram': result = kilograms;
+                    break;
+                case 'gram': result = kilograms * 1000;
+                    break;
+                case 'milligram': result = kilograms * 1000000;
+                    break;
+                case 'pound': result = kilograms / 0.453592;
+                    break;
+                case 'ounce': result = kilograms / 0.0283495;
+                    break;
+            }
+            
+            // 更新结果
+            const fromUnitText = document.getElementById('weight-from').options[document.getElementById('weight-from').selectedIndex].text;
+            const toUnitText = document.getElementById('weight-to').options[document.getElementById('weight-to').selectedIndex].text;
+            document.getElementById('weight-result').textContent = `${value} ${fromUnitText} = ${result.toFixed(4)} ${toUnitText}`;
+        }
+        
+        /**
+         * 交换重量单位
+         */
+        function swapWeightUnits() {
+            const fromSelect = document.getElementById('weight-from');
+            const toSelect = document.getElementById('weight-to');
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            convertWeight();
+        }
+        
+        /**
+         * 温度换算
+         */
+        function convertTemperature() {
+            const value = parseFloat(document.getElementById('temperature-value').value) || 0;
+            const fromUnit = document.getElementById('temperature-from').value;
+            const toUnit = document.getElementById('temperature-to').value;
+            
+            // 转换为摄氏度
+            let celsius;
+            switch(fromUnit) {
+                case 'celsius': celsius = value;
+                    break;
+                case 'fahrenheit': celsius = (value - 32) * 5/9;
+                    break;
+                case 'kelvin': celsius = value - 273.15;
+                    break;
+            }
+            
+            // 转换为目标单位
+            let result;
+            switch(toUnit) {
+                case 'celsius': result = celsius;
+                    break;
+                case 'fahrenheit': result = celsius * 9/5 + 32;
+                    break;
+                case 'kelvin': result = celsius + 273.15;
+                    break;
+            }
+            
+            // 更新结果
+            const fromUnitText = document.getElementById('temperature-from').options[document.getElementById('temperature-from').selectedIndex].text;
+            const toUnitText = document.getElementById('temperature-to').options[document.getElementById('temperature-to').selectedIndex].text;
+            document.getElementById('temperature-result').textContent = `${value} ${fromUnitText} = ${result.toFixed(2)} ${toUnitText}`;
+        }
+        
+        /**
+         * 交换温度单位
+         */
+        function swapTemperatureUnits() {
+            const fromSelect = document.getElementById('temperature-from');
+            const toSelect = document.getElementById('temperature-to');
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            convertTemperature();
+        }
+        
+        /**
+         * 汇率换算
+         */
+        function convertCurrency() {
+            const value = parseFloat(document.getElementById('currency-value').value) || 0;
+            const fromCurrency = document.getElementById('currency-from').value;
+            const toCurrency = document.getElementById('currency-to').value;
+            
+            // 转换为人民币
+            const cnyValue = value * exchangeRates[fromCurrency];
+            // 转换为目标货币
+            const result = cnyValue / exchangeRates[toCurrency];
+            
+            // 更新结果
+            const fromCurrencyText = document.getElementById('currency-from').options[document.getElementById('currency-from').selectedIndex].text;
+            const toCurrencyText = document.getElementById('currency-to').options[document.getElementById('currency-to').selectedIndex].text;
+            document.getElementById('currency-result').textContent = `${value} ${fromCurrencyText} = ${result.toFixed(4)} ${toCurrencyText}`;
+        }
+        
+        /**
+         * 交换货币单位
+         */
+        function swapCurrencyUnits() {
+            const fromSelect = document.getElementById('currency-from');
+            const toSelect = document.getElementById('currency-to');
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            convertCurrency();
+        }
+        
+        /**
+         * 返回首页
+         */
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+        
+        // 初始化换算
+        convertLength();
+        convertWeight();
+        convertTemperature();
+        convertCurrency();
+    </script>
+</body>
+</html>
