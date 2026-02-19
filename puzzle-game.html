@@ -321,6 +321,8 @@
                     
                     if (newIndex === this.size * this.size - 1) {
                         piece.classList.add('empty');
+                        piece.style.backgroundSize = '';
+                        piece.style.backgroundPosition = '';
                         this.emptyPieceIndex = index;
                     } else {
                         piece.classList.remove('empty');
@@ -405,6 +407,10 @@
                 const tempBg = piece1.style.backgroundPosition;
                 piece1.style.backgroundPosition = piece2.style.backgroundPosition;
                 piece2.style.backgroundPosition = tempBg;
+                
+                const tempSize = piece1.style.backgroundSize;
+                piece1.style.backgroundSize = piece2.style.backgroundSize;
+                piece2.style.backgroundSize = tempSize;
                 
                 piece1.classList.toggle('empty');
                 piece2.classList.toggle('empty');
