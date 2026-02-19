@@ -225,6 +225,7 @@
                 this.emptyPieceIndex = -1;
                 this.puzzlePieces = [];
                 this.originalOrder = [];
+                this.currentImageUrl = '';
                 
                 this.init();
             }
@@ -276,7 +277,8 @@
                 this.puzzlePieces = [];
                 this.originalOrder = [];
                 
-                const imageUrl = `https://picsum.photos/800/800?random=${Math.floor(Math.random() * 1000)}`;
+                // 生成并存储当前游戏的图片URL
+                this.currentImageUrl = `https://picsum.photos/800/800?random=${Math.floor(Math.random() * 1000)}`;
                 
                 for (let i = 0; i < this.size * this.size; i++) {
                     const piece = document.createElement('div');
@@ -289,7 +291,7 @@
                     } else {
                         const row = Math.floor(i / this.size);
                         const col = i % this.size;
-                        piece.style.backgroundImage = `url(${imageUrl})`;
+                        piece.style.backgroundImage = `url(${this.currentImageUrl})`;
                         piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
                         piece.style.backgroundPosition = `${-col * 100 / (this.size - 1)}% ${-row * 100 / (this.size - 1)}%`;
                     }
@@ -325,8 +327,7 @@
                         this.emptyPieceIndex = index;
                     } else {
                         piece.classList.remove('empty');
-                        const imageUrl = `https://picsum.photos/800/800?random=${Math.floor(Math.random() * 1000)}`;
-                        piece.style.backgroundImage = `url(${imageUrl})`;
+                        piece.style.backgroundImage = `url(${this.currentImageUrl})`;
                         piece.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
                         const row = Math.floor(newIndex / this.size);
                         const col = newIndex % this.size;
