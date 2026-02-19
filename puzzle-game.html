@@ -294,8 +294,9 @@
                         piece.style.backgroundPosition = `${(col / (this.size - 1)) * 100}% ${(row / (this.size - 1)) * 100}%`;
                     }
                     
+                    piece.dataset.pieceIndex = i;
                     piece.addEventListener('click', (e) => {
-                        const clickedIndex = Array.from(this.puzzlePieces).indexOf(e.currentTarget);
+                        const clickedIndex = parseInt(e.currentTarget.dataset.pieceIndex);
                         this.handlePieceClick(clickedIndex);
                     });
                     this.puzzleGrid.appendChild(piece);
