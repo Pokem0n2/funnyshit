@@ -327,7 +327,7 @@
                     piece.dataset.index = newIndex;
                     piece.dataset.pieceIndex = index;
                     
-                    if (index === this.size * this.size - 1) {
+                    if (newIndex === this.size * this.size - 1) {
                         piece.classList.add('empty');
                         piece.style.backgroundSize = '';
                         piece.style.backgroundPosition = '';
