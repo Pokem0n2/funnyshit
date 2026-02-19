@@ -232,6 +232,8 @@
         let currentExpression = '';
         let currentResult = '0';
         let waitingForOperand = true;
+        let lastResult = '0';
+        let justPressedEquals = false;
         
         /**
          * 更新显示
@@ -242,10 +244,61 @@
         }
         
         /**
+         * 计算表达式
+         * @param {string} expression - 要计算的表达式
+         * @returns {string} - 计算结果
+         */
+        function evaluateExpression(expression) {
+            try {
+                // 替换数学函数和常量
+                let expr = expression
+                    .replace(/sin\(/g, 'Math.sin(')
+                    .replace(/cos\(/g, 'Math.cos(')
+                    .replace(/tan\(/g, 'Math.tan(')
+                    .replace(/log\(/g, 'Math.log10(')
+                    .replace(/ln\(/g, 'Math.log(')
+                    .replace(/sqrt\(/g, 'Math.sqrt(')
+                    .replace(/π/g, 'Math.PI')
+                    .replace(/e/g, 'Math.E')
+                    .replace(/\^/g, '**');
+                
+                const result = eval(expr);
+                return isFinite(result) ? result.toString() : 'Error';
+            } catch (error) {
+                return 'Error';
+            }
+        }
+        
+        /**
+         * 预计算当前表达式
+         */
+        function preCalculate() {
+            if (currentExpression) {
+                let expr = currentExpression;
+                if (!waitingForOperand && currentResult !== '0') {
+                    expr += currentResult;
+                }
+                // 确保所有括号都已闭合
+                const openParens = (expr.match(/\(/g) || []).length;
+                const closeParens = (expr.match(/\)/g) || []).length;
+                if (openParens > closeParens) {
+                    expr += ')'.repeat(openParens - closeParens);
+                }
+                currentResult = evaluateExpression(expr);
+            }
+            updateDisplay();
+        }
+        
+        /**
          * 追加数字
          * @param {string} number - 要追加的数字
          */
         function appendNumber(number) {
+            if (justPressedEquals) {
+                currentExpression = '';
+                justPressedEquals = false;
+            }
+            
             if (waitingForOperand) {
                 currentResult = number;
                 waitingForOperand = false;
@@ -253,7 +306,8 @@
                 if (number === '.' && currentResult.includes('.')) return;
                 currentResult += number;
             }
-            updateDisplay();
+            
+            preCalculate();
         }
         
         /**
@@ -261,11 +315,16 @@
          * @param {string} operator - 要追加的运算符
          */
         function appendOperator(operator) {
-            if (!waitingForOperand) {
+            if (justPressedEquals) {
+                currentExpression = lastResult + ' ' + operator + ' ';
+                justPressedEquals = false;
+                waitingForOperand = true;
+            } else if (!waitingForOperand) {
                 currentExpression += currentResult + ' ' + operator + ' ';
                 waitingForOperand = true;
-                updateDisplay();
             }
+            
+            preCalculate();
         }
         
         /**
@@ -273,38 +332,40 @@
          * @param {string} func - 要追加的函数
          */
         function appendFunction(func) {
+            if (justPressedEquals) {
+                currentExpression = '';
+                justPressedEquals = false;
+            }
+            
             if (func === '^2') {
                 if (!waitingForOperand) {
                     currentExpression += currentResult + '^2';
-                    calculate();
+                    waitingForOperand = true;
                 }
             } else if (func === 'π') {
                 if (waitingForOperand) {
-                    currentResult = Math.PI.toFixed(10);
-                    waitingForOperand = false;
+                    currentExpression += 'π';
                 } else {
                     currentExpression += currentResult + ' * π';
-                    waitingForOperand = true;
                 }
-                updateDisplay();
+                waitingForOperand = true;
             } else if (func === 'e') {
                 if (waitingForOperand) {
-                    currentResult = Math.E.toFixed(10);
-                    waitingForOperand = false;
+                    currentExpression += 'e';
                 } else {
                     currentExpression += currentResult + ' * e';
-                    waitingForOperand = true;
                 }
-                updateDisplay();
+                waitingForOperand = true;
             } else {
                 if (waitingForOperand) {
                     currentExpression += func;
                 } else {
-                    currentExpression += currentResult + ' ' + func;
+                    currentExpression += currentResult + ' * ' + func;
                 }
                 waitingForOperand = true;
-                updateDisplay();
             }
+            
+            preCalculate();
         }
         
         /**
@@ -313,29 +374,24 @@
         function calculate() {
             if (!waitingForOperand) {
                 currentExpression += currentResult;
-                
-                try {
-                    // 替换数学函数和常量
-                    let expression = currentExpression
-                        .replace(/sin\(/g, 'Math.sin(')
-                        .replace(/cos\(/g, 'Math.cos(')
-                        .replace(/tan\(/g, 'Math.tan(')
-                        .replace(/log\(/g, 'Math.log10(')
-                        .replace(/ln\(/g, 'Math.log(')
-                        .replace(/sqrt\(/g, 'Math.sqrt(')
-                        .replace(/π/g, 'Math.PI')
-                        .replace(/e/g, 'Math.E')
-                        .replace(/\^/g, '**');
-                    
-                    const result = eval(expression);
-                    currentResult = isFinite(result) ? result.toString() : 'Error';
-                } catch (error) {
-                    currentResult = 'Error';
+            }
+            
+            try {
+                // 确保所有括号都已闭合
+                const openParens = (currentExpression.match(/\(/g) || []).length;
+                const closeParens = (currentExpression.match(/\)/g) || []).length;
+                if (openParens > closeParens) {
+                    currentExpression += ')'.repeat(openParens - closeParens);
                 }
                 
-                waitingForOperand = true;
-                updateDisplay();
+                currentResult = evaluateExpression(currentExpression);
+                lastResult = currentResult;
+                justPressedEquals = true;
+            } catch (error) {
+                currentResult = 'Error';
             }
+            
+            updateDisplay();
         }
         
         /**
@@ -345,6 +401,8 @@
             currentExpression = '';
             currentResult = '0';
             waitingForOperand = true;
+            lastResult = '0';
+            justPressedEquals = false;
             updateDisplay();
         }
         
