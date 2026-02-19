@@ -373,6 +373,10 @@
             handlePieceClick(index) {
                 if (!this.isPlaying) return;
                 
+                console.log('Clicked piece index:', index);
+                console.log('Empty piece index:', this.emptyPieceIndex);
+                console.log('Is adjacent:', this.isAdjacent(index, this.emptyPieceIndex));
+                
                 if (this.isAdjacent(index, this.emptyPieceIndex)) {
                     this.swapPieces(index, this.emptyPieceIndex);
                     this.moves++;
