@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字效果</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+        
+        h1 {
+            margin-bottom: 50px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        .typing-container {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            max-width: 800px;
+            width: 90%;
+        }
+        
+        .typing-text {
+            font-size: 1.5em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            min-height: 200px;
+        }
+        
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: #00ff00;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(0, 255, 255, 0.2);
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: rgba(0, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .speed-control {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        input[type="range"] {
+            width: 150px;
+        }
+        
+        .text-selection {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        select {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-family: 'Courier New', monospace;
+        }
+        
+        a.back {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        a.back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .highlight {
+            color: #00ff00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back">← 返回首页</a>
+    
+    <h1>打字效果 - 动态文字输入</h1>
+    
+    <div class="typing-container">
+        <div class="typing-text" id="typing-text">
+            <!-- 打字效果将在这里显示 -->
+        </div>
+        
+        <div class="text-selection">
+            <label for="text-option">选择文本：</label>
+            <select id="text-option" onchange="changeText()">
+                <option value="programming">编程相关</option>
+                <option value="poetry">诗歌</option>
+                <option value="quote">名言</option>
+                <option value="custom">自定义文本</option>
+            </select>
+            <input type="text" id="custom-text" placeholder="输入自定义文本" style="display: none; margin-left: 10px; padding: 8px; border-radius: 5px; border: none; background: rgba(0, 0, 0, 0.5); color: white;">
+        </div>
+        
+        <div class="speed-control">
+            <label>打字速度：</label>
+            <input type="range" id="speed-slider" min="50" max="300" value="100">
+            <span id="speed-value">100ms</span>
+        </div>
+        
+        <div class="controls">
+            <button onclick="startTyping()">开始打字</button>
+            <button onclick="pauseTyping()">暂停</button>
+            <button onclick="resetTyping()">重置</button>
+        </div>
+    </div>
+    
+    <script>
+        // 获取DOM元素
+        const typingText = document.getElementById('typing-text');
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        typingText.appendChild(cursor);
+        
+        const speedSlider = document.getElementById('speed-slider');
+        const speedValue = document.getElementById('speed-value');
+        const textOption = document.getElementById('text-option');
+        const customTextInput = document.getElementById('custom-text');
+        
+        // 文本选项
+        const texts = {
+            programming: `你好！欢迎来到编程世界。\n\n编程是一种创造性的活动，它让我们能够通过代码构建各种神奇的应用。\n\nJavaScript是一种强大的编程语言，它可以让网页变得更加生动和交互。\n\n学习编程需要耐心和毅力，但当你看到自己的代码运行起来时，那种成就感是无与伦比的。\n\n加油！你一定可以成为一名优秀的程序员！`,
+            poetry: `静夜思\n\n床前明月光，\n疑是地上霜。\n举头望明月，\n低头思故乡。\n\n—— 李白`,
+            quote: `"编程不仅仅是编写代码，更是一种解决问题的思维方式。"\n\n"学习编程就像学习一门新语言，需要不断练习和积累。"\n\n"优秀的程序员不仅要写出能运行的代码，更要写出优雅、可维护的代码。"\n\n"编程的乐趣在于创造，在于将想法变为现实。"`,
+            custom: ""
+        };
+        
+        // 状态变量
+        let currentText = texts.programming;
+        let index = 0;
+        let isTyping = false;
+        let isPaused = false;
+        let typingInterval;
+        let typingSpeed = 100;
+        
+        /**
+         * 开始打字效果
+         * 功能：启动打字动画，逐个字符显示文本
+         */
+        function startTyping() {
+            if (isTyping && !isPaused) return;
+            
+            isTyping = true;
+            isPaused = false;
+            
+            // 清除之前的定时器
+            clearInterval(typingInterval);
+            
+            // 设置打字速度
+            typingSpeed = 350 - speedSlider.value;
+            
+            // 开始打字动画
+            typingInterval = setInterval(() => {
+                if (index < currentText.length) {
+                    // 添加当前字符
+                    const char = currentText[index];
+                    
+                    // 处理换行符
+                    if (char === '\n') {
+                        const br = document.createElement('br');
+                        typingText.insertBefore(br, cursor);
+                    } else if (char === '"') {
+                        // 处理引号，添加高亮效果
+                        const span = document.createElement('span');
+                        span.className = 'highlight';
+                        span.textContent = char;
+                        typingText.insertBefore(span, cursor);
+                    } else {
+                        // 普通字符
+                        const textNode = document.createTextNode(char);
+                        typingText.insertBefore(textNode, cursor);
+                    }
+                    
+                    index++;
+                } else {
+                    // 打字完成
+                    clearInterval(typingInterval);
+                    isTyping = false;
+                }
+            }, typingSpeed);
+        }
+        
+        /**
+         * 暂停打字效果
+         * 功能：暂停当前打字动画
+         */
+        function pauseTyping() {
+            isPaused = !isPaused;
+            
+            if (isPaused) {
+                clearInterval(typingInterval);
+            } else if (isTyping) {
+                startTyping();
+            }
+        }
+        
+        /**
+         * 重置打字效果
+         * 功能：清空文本并重置状态
+         */
+        function resetTyping() {
+            clearInterval(typingInterval);
+            isTyping = false;
+            isPaused = false;
+            index = 0;
+            
+            // 清空文本，保留光标
+            while (typingText.firstChild && typingText.firstChild !== cursor) {
+                typingText.removeChild(typingText.firstChild);
+            }
+        }
+        
+        /**
+         * 改变文本内容
+         * 功能：根据选择的选项切换文本内容
+         */
+        function changeText() {
+            const option = textOption.value;
+            
+            // 显示或隐藏自定义文本输入框
+            if (option === 'custom') {
+                customTextInput.style.display = 'inline-block';
+                // 监听自定义文本变化
+                customTextInput.addEventListener('input', () => {
+                    texts.custom = customTextInput.value;
+                    currentText = texts.custom;
+                    resetTyping();
+                });
+            } else {
+                customTextInput.style.display = 'none';
+                currentText = texts[option];
+                resetTyping();
+            }
+        }
+        
+        /**
+         * 更新打字速度
+         * 功能：根据滑块值调整打字速度
+         */
+        function updateSpeed() {
+            const speed = speedSlider.value;
+            speedValue.textContent = `${speed}ms`;
+            typingSpeed = 350 - speed;
+            
+            // 如果正在打字，重新启动以应用新速度
+            if (isTyping && !isPaused) {
+                clearInterval(typingInterval);
+                startTyping();
+            }
+        }
+        
+        // 监听速度滑块变化
+        speedSlider.addEventListener('input', updateSpeed);
+        
+        // 初始化
+        resetTyping();
+    </script>
+</body>
+</html>

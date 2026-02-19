@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D旋转效果</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: radial-gradient(circle, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+            overflow: hidden;
+        }
+        
+        h1 {
+            position: absolute;
+            top: 30px;
+            color: white;
+            font-size: 2em;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        
+        .scene {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            transform-style: preserve-3d;
+            animation: rotate 20s linear infinite;
+        }
+        
+        .cube {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            top: 100px;
+            left: 100px;
+            transform-style: preserve-3d;
+        }
+        
+        .face {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            opacity: 0.9;
+            transition: all 0.3s ease;
+        }
+        
+        .front  { transform: translateZ(100px); background: rgba(255, 0, 0, 0.7); }
+        .back   { transform: rotateY(180deg) translateZ(100px); background: rgba(0, 255, 0, 0.7); }
+        .right  { transform: rotateY(90deg) translateZ(100px); background: rgba(0, 0, 255, 0.7); }
+        .left   { transform: rotateY(-90deg) translateZ(100px); background: rgba(255, 255, 0, 0.7); }
+        .top    { transform: rotateX(90deg) translateZ(100px); background: rgba(255, 0, 255, 0.7); }
+        .bottom { transform: rotateX(-90deg) translateZ(100px); background: rgba(0, 255, 255, 0.7); }
+        
+        .small-cubes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+        
+        .small-cube {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            transform-style: preserve-3d;
+        }
+        
+        .small-face {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            opacity: 0.8;
+        }
+        
+        .small-front  { transform: translateZ(30px); }
+        .small-back   { transform: rotateY(180deg) translateZ(30px); }
+        .small-right  { transform: rotateY(90deg) translateZ(30px); }
+        .small-left   { transform: rotateY(-90deg) translateZ(30px); }
+        .small-top    { transform: rotateX(90deg) translateZ(30px); }
+        .small-bottom { transform: rotateX(-90deg) translateZ(30px); }
+        
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            display: flex;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        a.back {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        a.back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back">← 返回首页</a>
+    
+    <h1>3D旋转效果 - 立体立方体</h1>
+    
+    <div class="scene" id="scene">
+        <div class="cube">
+            <div class="face front">前</div>
+            <div class="face back">后</div>
+            <div class="face right">右</div>
+            <div class="face left">左</div>
+            <div class="face top">上</div>
+            <div class="face bottom">下</div>
+            
+            <div class="small-cubes" id="small-cubes">
+                <!-- 小立方体将通过JavaScript生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button onclick="toggleAnimation()">暂停/播放</button>
+        <button onclick="changeSpeed('faster')">加速</button>
+        <button onclick="changeSpeed('slower')">减速</button>
+        <button onclick="togglePulse()">脉冲效果</button>
+    </div>
+    
+    <script>
+        // 获取场景元素
+        const scene = document.getElementById('scene');
+        const smallCubesContainer = document.getElementById('small-cubes');
+        let isAnimating = true;
+        let animationSpeed = 20;
+        let isPulsing = false;
+        
+        /**
+         * 生成小立方体
+         * 功能：在大立方体内部生成多个彩色小立方体
+         */
+        function generateSmallCubes() {
+            const positions = [
+                { x: -70, y: -70, z: -70 },
+                { x: 70, y: -70, z: -70 },
+                { x: -70, y: 70, z: -70 },
+                { x: 70, y: 70, z: -70 },
+                { x: -70, y: -70, z: 70 },
+                { x: 70, y: -70, z: 70 },
+                { x: -70, y: 70, z: 70 },
+                { x: 70, y: 70, z: 70 }
+            ];
+            
+            const colors = [
+                'rgba(255, 0, 0, 0.8)',
+                'rgba(0, 255, 0, 0.8)',
+                'rgba(0, 0, 255, 0.8)',
+                'rgba(255, 255, 0, 0.8)',
+                'rgba(255, 0, 255, 0.8)',
+                'rgba(0, 255, 255, 0.8)',
+                'rgba(128, 0, 0, 0.8)',
+                'rgba(0, 128, 0, 0.8)'
+            ];
+            
+            positions.forEach((pos, index) => {
+                const smallCube = document.createElement('div');
+                smallCube.className = 'small-cube';
+                smallCube.style.transform = `translate3d(${pos.x}px, ${pos.y}px, ${pos.z}px)`;
+                
+                const color = colors[index % colors.length];
+                
+                // 创建小立方体的6个面
+                for (let i = 0; i < 6; i++) {
+                    const face = document.createElement('div');
+                    const faceClasses = ['small-front', 'small-back', 'small-right', 'small-left', 'small-top', 'small-bottom'];
+                    face.className = `small-face ${faceClasses[i]}`;
+                    face.style.backgroundColor = color;
+                    smallCube.appendChild(face);
+                }
+                
+                smallCubesContainer.appendChild(smallCube);
+            });
+        }
+        
+        /**
+         * 切换动画状态
+         * 功能：暂停或播放3D旋转动画
+         */
+        function toggleAnimation() {
+            isAnimating = !isAnimating;
+            if (isAnimating) {
+                scene.style.animation = `rotate ${animationSpeed}s linear infinite`;
+            } else {
+                scene.style.animation = 'none';
+            }
+        }
+        
+        /**
+         * 改变动画速度
+         * 功能：加速或减速3D旋转动画
+         * @param {string} direction - 方向：'faster' 或 'slower'
+         */
+        function changeSpeed(direction) {
+            if (direction === 'faster' && animationSpeed > 5) {
+                animationSpeed -= 2;
+            } else if (direction === 'slower' && animationSpeed < 30) {
+                animationSpeed += 2;
+            }
+            
+            if (isAnimating) {
+                scene.style.animation = `rotate ${animationSpeed}s linear infinite`;
+            }
+        }
+        
+        /**
+         * 切换脉冲效果
+         * 功能：为大立方体添加或移除脉冲动画效果
+         */
+        function togglePulse() {
+            isPulsing = !isPulsing;
+            const cube = document.querySelector('.cube');
+            if (isPulsing) {
+                cube.classList.add('pulse');
+            } else {
+                cube.classList.remove('pulse');
+            }
+        }
+        
+        /**
+         * 鼠标移动交互
+         * 功能：根据鼠标位置调整场景视角
+         */
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = (e.clientX / window.innerWidth - 0.5) * 20;
+            const mouseY = (e.clientY / window.innerHeight - 0.5) * 20;
+            scene.style.transform = `rotateX(${-mouseY}deg) rotateY(${mouseX}deg)`;
+        });
+        
+        // 初始化生成小立方体
+        generateSmallCubes();
+    </script>
+</body>
+</html>

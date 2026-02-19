@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas动画</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        canvas {
+            background: #000;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            cursor: crosshair;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            color: white;
+        }
+        
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        input[type="range"] {
+            width: 150px;
+            margin-top: 5px;
+        }
+        
+        a.back {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        a.back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back">← 返回首页</a>
+    
+    <h1>Canvas动画 - 交互式粒子系统</h1>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    
+    <div class="controls">
+        <div class="control-item">
+            <label>粒子数量: <span id="particle-count">100</span></label>
+            <input type="range" id="count-slider" min="50" max="500" value="100">
+        </div>
+        <div class="control-item">
+            <label>粒子大小: <span id="particle-size">2</span></label>
+            <input type="range" id="size-slider" min="1" max="10" value="2">
+        </div>
+        <div class="control-item">
+            <label>速度: <span id="particle-speed">2</span></label>
+            <input type="range" id="speed-slider" min="0.5" max="5" step="0.5" value="2">
+        </div>
+    </div>
+    
+    <script>
+        // 获取Canvas元素和上下文
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 粒子数组
+        let particles = [];
+        let particleCount = 100;
+        let particleSize = 2;
+        let particleSpeed = 2;
+        
+        // 鼠标位置
+        let mouse = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            isDown: false
+        };
+        
+        // 初始化粒子
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * particleSpeed,
+                    vy: (Math.random() - 0.5) * particleSpeed,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`
+                });
+            }
+        }
+        
+        // 更新粒子位置
+        function updateParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                
+                // 更新位置
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                // 边界检测
+                if (p.x < 0 || p.x > canvas.width) {
+                    p.vx *= -1;
+                }
+                if (p.y < 0 || p.y > canvas.height) {
+                    p.vy *= -1;
+                }
+                
+                // 鼠标交互
+                if (mouse.isDown) {
+                    const dx = p.x - mouse.x;
+                    const dy = p.y - mouse.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 100) {
+                        const force = (100 - dist) / 100;
+                        p.x += (dx / dist) * force * 2;
+                        p.y += (dy / dist) * force * 2;
+                    }
+                }
+            }
+        }
+        
+        // 绘制粒子
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制连接线
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${0.2 * (1 - dist / 100)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // 绘制粒子
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, particleSize, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            }
+        }
+        
+        // 动画循环
+        function animate() {
+            updateParticles();
+            drawParticles();
+            requestAnimationFrame(animate);
+        }
+        
+        // 事件监听
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('mousedown', () => {
+            mouse.isDown = true;
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            mouse.isDown = false;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            mouse.isDown = false;
+        });
+        
+        // 控制滑块
+        document.getElementById('count-slider').addEventListener('input', (e) => {
+            particleCount = parseInt(e.target.value);
+            document.getElementById('particle-count').textContent = particleCount;
+            initParticles();
+        });
+        
+        document.getElementById('size-slider').addEventListener('input', (e) => {
+            particleSize = parseInt(e.target.value);
+            document.getElementById('particle-size').textContent = particleSize;
+        });
+        
+        document.getElementById('speed-slider').addEventListener('input', (e) => {
+            particleSpeed = parseFloat(e.target.value);
+            document.getElementById('particle-speed').textContent = particleSpeed;
+            // 更新现有粒子速度
+            particles.forEach(p => {
+                const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+                p.vx = (p.vx / speed) * particleSpeed;
+                p.vy = (p.vy / speed) * particleSpeed;
+            });
+        });
+        
+        // 初始化
+        initParticles();
+        animate();
+    </script>
+</body>
+</html>

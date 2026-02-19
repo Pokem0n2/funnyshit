@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>粒子效果</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        h1 {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 3em;
+            text-align: center;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            z-index: 10;
+        }
+        
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: white;
+            opacity: 0.8;
+            animation: float linear infinite;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 10;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        a.back {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        a.back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back">← 返回首页</a>
+    
+    <h1>粒子效果 - 动态背景</h1>
+    
+    <div class="particles-container" id="particles-container"></div>
+    
+    <div class="controls">
+        <button onclick="changeEffect('snow')">雪花效果</button>
+        <button onclick="changeEffect('rain')">雨滴效果</button>
+        <button onclick="changeEffect('stars')">星空效果</button>
+        <button onclick="toggleParticles()">暂停/播放</button>
+    </div>
+    
+    <script>
+        // 获取粒子容器
+        const particlesContainer = document.getElementById('particles-container');
+        let particles = [];
+        let isAnimating = true;
+        let currentEffect = 'snow';
+        
+        /**
+         * 创建粒子
+         * 功能：生成单个粒子元素并添加到容器中
+         */
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            // 根据当前效果设置粒子属性
+            let size, color, duration, delay, left;
+            
+            switch (currentEffect) {
+                case 'snow':
+                    size = Math.random() * 5 + 1;
+                    color = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`;
+                    duration = Math.random() * 10 + 5;
+                    delay = Math.random() * 10;
+                    break;
+                case 'rain':
+                    size = Math.random() * 2 + 0.5;
+                    color = `rgba(100, 149, 237, ${Math.random() * 0.5 + 0.5})`;
+                    duration = Math.random() * 2 + 0.5;
+                    delay = Math.random() * 5;
+                    break;
+                case 'stars':
+                    size = Math.random() * 3 + 1;
+                    color = `rgba(255, 255, 255, ${Math.random() * 0.8 + 0.2})`;
+                    duration = Math.random() * 3 + 2;
+                    delay = Math.random() * 10;
+                    break;
+            }
+            
+            left = Math.random() * 100;
+            
+            // 设置粒子样式
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.backgroundColor = color;
+            particle.style.left = `${left}%`;
+            particle.style.animationDuration = `${duration}s`;
+            particle.style.animationDelay = `${delay}s`;
+            
+            // 添加到容器
+            particlesContainer.appendChild(particle);
+            particles.push(particle);
+            
+            // 动画结束后移除粒子
+            particle.addEventListener('animationend', () => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                    particles = particles.filter(p => p !== particle);
+                }
+            });
+        }
+        
+        /**
+         * 生成粒子
+         * 功能：持续生成粒子
+         */
+        function generateParticles() {
+            if (!isAnimating) return;
+            
+            // 根据效果控制生成速率
+            let spawnRate;
+            switch (currentEffect) {
+                case 'snow':
+                    spawnRate = 50;
+                    break;
+                case 'rain':
+                    spawnRate = 200;
+                    break;
+                case 'stars':
+                    spawnRate = 30;
+                    break;
+            }
+            
+            // 生成多个粒子
+            for (let i = 0; i < 5; i++) {
+                setTimeout(createParticle, Math.random() * 1000);
+            }
+            
+            // 继续生成
+            setTimeout(generateParticles, 1000 / spawnRate);
+        }
+        
+        /**
+         * 改变效果
+         * 功能：切换不同的粒子效果
+         * @param {string} effect - 效果类型：'snow', 'rain', 'stars'
+         */
+        function changeEffect(effect) {
+            currentEffect = effect;
+            clearParticles();
+            if (isAnimating) {
+                generateParticles();
+            }
+        }
+        
+        /**
+         * 清除所有粒子
+         * 功能：移除容器中所有粒子
+         */
+        function clearParticles() {
+            particles.forEach(particle => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            });
+            particles = [];
+        }
+        
+        /**
+         * 切换粒子动画
+         * 功能：暂停或播放粒子效果
+         */
+        function toggleParticles() {
+            isAnimating = !isAnimating;
+            
+            if (isAnimating) {
+                generateParticles();
+            } else {
+                // 暂停所有粒子动画
+                particles.forEach(particle => {
+                    particle.style.animationPlayState = 'paused';
+                });
+            }
+        }
+        
+        /**
+         * 鼠标移动交互
+         * 功能：鼠标移动时在鼠标位置生成额外粒子
+         */
+        document.addEventListener('mousemove', (e) => {
+            if (!isAnimating) return;
+            
+            // 随机生成粒子
+            if (Math.random() > 0.7) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                let size, color, duration;
+                
+                switch (currentEffect) {
+                    case 'snow':
+                        size = Math.random() * 3 + 1;
+                        color = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.5})`;
+                        duration = Math.random() * 3 + 2;
+                        break;
+                    case 'rain':
+                        size = Math.random() * 1.5 + 0.5;
+                        color = `rgba(100, 149, 237, ${Math.random() * 0.5 + 0.5})`;
+                        duration = Math.random() * 1 + 0.5;
+                        break;
+                    case 'stars':
+                        size = Math.random() * 2 + 1;
+                        color = `rgba(255, 255, 255, ${Math.random() * 0.8 + 0.2})`;
+                        duration = Math.random() * 2 + 1;
+                        break;
+                }
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.backgroundColor = color;
+                particle.style.left = `${e.clientX}px`;
+                particle.style.top = `${e.clientY}px`;
+                particle.style.animationDuration = `${duration}s`;
+                particle.style.animation = 'none';
+                
+                particlesContainer.appendChild(particle);
+                
+                // 触发动画
+                setTimeout(() => {
+                    particle.style.animation = 'float linear forwards';
+                }, 10);
+                
+                // 移除粒子
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, duration * 1000);
+            }
+        });
+        
+        // 初始化生成粒子
+        generateParticles();
+    </script>
+</body>
+</html>
