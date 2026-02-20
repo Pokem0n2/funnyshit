@@ -378,20 +378,48 @@
             function evaluateExpression() {
                 if (!currentExpression) return;
                 try {
-                    // Replace function calls in expression with real evaluations
-                    // For this, recursively replace function calls with evaluated values
-                    let expr = currentExpression;
-
-                    expr = expr.replace(/sin\(([^)]+)\)/g, (_, val) => functionsMap.sin(safeEval(val)).toString());
-                    expr = expr.replace(/cos\(([^)]+)\)/g, (_, val) => functionsMap.cos(safeEval(val)).toString());
-                    expr = expr.replace(/tan\(([^)]+)\)/g, (_, val) => functionsMap.tan(safeEval(val)).toString());
-                    expr = expr.replace(/log\(([^)]+)\)/g, (_, val) => functionsMap.log(safeEval(val)).toString());
-                    expr = expr.replace(/ln\(([^)]+)\)/g, (_, val) => functionsMap.ln(safeEval(val)).toString());
-                    expr = expr.replace(/sqrt\(([^)]+)\)/g, (_, val) => functionsMap.sqrt(safeEval(val)).toString());
-                    expr = expr.replace(/exp\(([^)]+)\)/g, (_, val) => functionsMap.exp(safeEval(val)).toString());
-
-                    // Evaluate the final expression with safeEval, supporting power ^ operator replacement in safeEval
-                    let result = safeEval(expr);
+                    // 直接计算表达式中的函数调用
+                    let result;
+                    
+                    // 检查是否是单个函数调用，如sin(180)
+                    const sinMatch = currentExpression.match(/^sin\(([^)]+)\)$/);
+                    const cosMatch = currentExpression.match(/^cos\(([^)]+)\)$/);
+                    const tanMatch = currentExpression.match(/^tan\(([^)]+)\)$/);
+                    const logMatch = currentExpression.match(/^log\(([^)]+)\)$/);
+                    const lnMatch = currentExpression.match(/^ln\(([^)]+)\)$/);
+                    const sqrtMatch = currentExpression.match(/^sqrt\(([^)]+)\)$/);
+                    const expMatch = currentExpression.match(/^exp\(([^)]+)\)$/);
+                    
+                    if (sinMatch) {
+                        result = functionsMap.sin(safeEval(sinMatch[1]));
+                    } else if (cosMatch) {
+                        result = functionsMap.cos(safeEval(cosMatch[1]));
+                    } else if (tanMatch) {
+                        result = functionsMap.tan(safeEval(tanMatch[1]));
+                    } else if (logMatch) {
+                        result = functionsMap.log(safeEval(logMatch[1]));
+                    } else if (lnMatch) {
+                        result = functionsMap.ln(safeEval(lnMatch[1]));
+                    } else if (sqrtMatch) {
+                        result = functionsMap.sqrt(safeEval(sqrtMatch[1]));
+                    } else if (expMatch) {
+                        result = functionsMap.exp(safeEval(expMatch[1]));
+                    } else {
+                        // 处理复杂表达式
+                        let expr = currentExpression;
+                        
+                        // 替换函数调用
+                        expr = expr.replace(/sin\(([^)]+)\)/g, (_, val) => functionsMap.sin(safeEval(val)).toString());
+                        expr = expr.replace(/cos\(([^)]+)\)/g, (_, val) => functionsMap.cos(safeEval(val)).toString());
+                        expr = expr.replace(/tan\(([^)]+)\)/g, (_, val) => functionsMap.tan(safeEval(val)).toString());
+                        expr = expr.replace(/log\(([^)]+)\)/g, (_, val) => functionsMap.log(safeEval(val)).toString());
+                        expr = expr.replace(/ln\(([^)]+)\)/g, (_, val) => functionsMap.ln(safeEval(val)).toString());
+                        expr = expr.replace(/sqrt\(([^)]+)\)/g, (_, val) => functionsMap.sqrt(safeEval(val)).toString());
+                        expr = expr.replace(/exp\(([^)]+)\)/g, (_, val) => functionsMap.exp(safeEval(val)).toString());
+                        
+                        // 计算最终表达式
+                        result = safeEval(expr);
+                    }
 
                     // Handle floating point precision issues - round to max 10 decimals
                     if (typeof result === 'number') {
