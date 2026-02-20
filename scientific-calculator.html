@@ -227,7 +227,7 @@
     
     <script>
         /**
-         * 科学计算器功能
+         * 科学计算器功能 - 基于 calc.html 的完整实现
          */
         (function() {
             const expressionDisplay = document.getElementById('expression');
@@ -235,13 +235,13 @@
             let currentExpression = '';
             let lastInput = '';
             let resetNext = false;
-            
+
             // Math constants and functions mapping
             const constants = {
                 'π': Math.PI,
                 'e': Math.E
             };
-            
+
             const functionsMap = {
                 'sin': (x) => Math.sin(toRadians(x)),
                 'cos': (x) => Math.cos(toRadians(x)),
@@ -252,42 +252,39 @@
                 'exp': (x) => Math.exp(x),
                 'pow': (x, y) => Math.pow(x, y),
             };
-            
+
             // Converts degrees to radians
             function toRadians(deg) {
-                console.log('Converting degrees to radians:', deg);
-                const radians = deg * Math.PI / 180;
-                console.log('Result:', radians);
-                return radians;
+                return deg * Math.PI / 180;
             }
-            
+
             // Secure evaluation function using Function constructor
             function safeEval(expr) {
                 // Replace constants
                 expr = expr.replace(/π/g, '(' + Math.PI + ')');
                 expr = expr.replace(/e/g, '(' + Math.E + ')');
-                
+
                 // Replace percent operator (%) by dividing by 100
                 expr = expr.replace(/(\d+)%/g, '($1/100)');
-                
+
                 // Block any invalid characters
                 if (/[^0-9\.+\-\*\/\^\%\(\)eπ\s]/.test(expr)) {
                     throw Error('Invalid characters in expression');
                 }
-                
+
                 // Replace ^ for power with **
                 expr = expr.replace(/\^/g, '**');
-                
+
                 // Evaluate using Function - safe within this controlled input
                 return Function('"use strict";return (' + expr + ')')();
             }
-            
+
             // Updates the display
             function updateDisplay() {
                 expressionDisplay.textContent = currentExpression;
                 resultDisplay.textContent = currentExpression || '0';
             }
-            
+
             // Insert value into expression display
             function insertValue(val) {
                 if (resetNext) {
@@ -298,20 +295,48 @@
                 updateDisplay();
                 lastInput = val;
             }
-            
+
             // Clear all input
             function clearAll() {
                 currentExpression = '';
                 updateDisplay();
             }
-            
+
+            // Backspace last character
+            function backspace() {
+                if (resetNext) {
+                    clearAll();
+                    resetNext = false;
+                    return;
+                }
+                currentExpression = currentExpression.slice(0, -1);
+                updateDisplay();
+            }
+
+            // Toggle plus/minus sign of the last number entered
+            function toggleSign() {
+                if (resetNext) {
+                    resetNext = false;
+                    return;
+                }
+                // Use regex to find last number and change sign
+                const match = currentExpression.match(/(-?\d+\.?\d*)$/);
+                if (match) {
+                    const num = match[1];
+                    const start = match.index;
+                    const toggled = num.startsWith('-') ? num.slice(1) : '-' + num;
+                    currentExpression = currentExpression.slice(0, start) + toggled;
+                    updateDisplay();
+                }
+            }
+
             // Apply a scientific function like sin, cos, tan, log etc.
             function applyFunction(fnName) {
                 if (resetNext) {
                     resetNext = false;
                 }
                 try {
-                    // Special case: pow expects two inputs separated by ^
+                    // Special case: pow expects two inputs separated by ^ or by pressing the pow button then entering exponent
                     if (fnName === 'pow') {
                         currentExpression += '^';
                         updateDisplay();
@@ -348,135 +373,51 @@
                     currentExpression = '';
                 }
             }
-            
+
             // Evaluate the current expression
             function evaluateExpression() {
                 if (!currentExpression) return;
                 try {
                     // Replace function calls in expression with real evaluations
+                    // For this, recursively replace function calls with evaluated values
                     let expr = currentExpression;
-                    console.log('Original expression:', expr);
-                    
-                    // First handle trigonometric functions
-                    expr = expr.replace(/sin\(([^)]+)\)/g, (match, val) => {
-                        try {
-                            const arg = safeEval(val);
-                            const result = functionsMap.sin(arg);
-                            return result.toString();
-                        } catch (e) {
-                            throw new Error(`Invalid sin argument: ${val}`);
-                        }
-                    });
-                    expr = expr.replace(/cos\(([^)]+)\)/g, (match, val) => {
-                        try {
-                            const arg = safeEval(val);
-                            const result = functionsMap.cos(arg);
-                            return result.toString();
-                        } catch (e) {
-                            throw new Error(`Invalid cos argument: ${val}`);
-                        }
-                    });
-                    expr = expr.replace(/tan\(([^)]+)\)/g, (match, val) => {
-                        try {
-                            const arg = safeEval(val);
-                            const result = functionsMap.tan(arg);
-                            return result.toString();
-                        } catch (e) {
-                            throw new Error(`Invalid tan argument: ${val}`);
-                        }
-                    });
-                    
-                    // Then handle other functions
-                    expr = expr.replace(/log\(([^)]+)\)/g, (match, val) => {
-                        try {
-                            const result = functionsMap.log(safeEval(val));
-                            return result.toString();
-                        } catch (e) {
-                            throw new Error(`Invalid log argument: ${val}`);
-                        }
-                    });
-                    expr = expr.replace(/ln\(([^)]+)\)/g, (match, val) => {
-                        try {
-                            const result = functionsMap.ln(safeEval(val));
-                            return result.toString();
-                        } catch (e) {
-                            throw new Error(`Invalid ln argument: ${val}`);
-                        }
-                    });
-                    expr = expr.replace(/sqrt\(([^)]+)\)/g, (match, val) => {
-                        try {
-                            const result = functionsMap.sqrt(safeEval(val));
-                            return result.toString();
-                        } catch (e) {
-                            throw new Error(`Invalid sqrt argument: ${val}`);
-                        }
-                    });
-                    expr = expr.replace(/exp\(([^)]+)\)/g, (match, val) => {
-                        try {
-                            const result = functionsMap.exp(safeEval(val));
-                            return result.toString();
-                        } catch (e) {
-                            throw new Error(`Invalid exp argument: ${val}`);
-                        }
-                    });
-                    
-                    // Evaluate the final expression with safeEval
+
+                    expr = expr.replace(/sin\(([^)]+)\)/g, (_, val) => functionsMap.sin(safeEval(val)));
+                    expr = expr.replace(/cos\(([^)]+)\)/g, (_, val) => functionsMap.cos(safeEval(val)));
+                    expr = expr.replace(/tan\(([^)]+)\)/g, (_, val) => functionsMap.tan(safeEval(val)));
+                    expr = expr.replace(/log\(([^)]+)\)/g, (_, val) => functionsMap.log(safeEval(val)));
+                    expr = expr.replace(/ln\(([^)]+)\)/g, (_, val) => functionsMap.ln(safeEval(val)));
+                    expr = expr.replace(/sqrt\(([^)]+)\)/g, (_, val) => functionsMap.sqrt(safeEval(val)));
+                    expr = expr.replace(/exp\(([^)]+)\)/g, (_, val) => functionsMap.exp(safeEval(val)));
+
+                    // Evaluate the final expression with safeEval, supporting power ^ operator replacement in safeEval
                     let result = safeEval(expr);
-                    
+
                     // Handle floating point precision issues - round to max 10 decimals
                     if (typeof result === 'number') {
                         result = +result.toFixed(10);
                     }
-                    
+
                     resultDisplay.textContent = result;
                     currentExpression = result.toString();
                     resetNext = true;
                 } catch (e) {
-                    console.error('Evaluation error:', e);
                     resultDisplay.textContent = 'Error';
                     currentExpression = '';
                     resetNext = true;
                 }
             }
-            
-            // Backspace last character
-            function backspace() {
-                if (resetNext) {
-                    clearAll();
-                    resetNext = false;
-                    return;
-                }
-                currentExpression = currentExpression.slice(0, -1);
-                updateDisplay();
-            }
-            
-            // Toggle plus/minus sign of the last number entered
-            function toggleSign() {
-                if (resetNext) {
-                    resetNext = false;
-                    return;
-                }
-                // Use regex to find last number and change sign
-                const match = currentExpression.match(/(-?\d+\.?\d*)$/);
-                if (match) {
-                    const num = match[1];
-                    const start = match.index;
-                    const toggled = num.startsWith('-') ? num.slice(1) : '-' + num;
-                    currentExpression = currentExpression.slice(0, start) + toggled;
-                    updateDisplay();
-                }
-            }
-            
+
             // 追加数字
             window.appendNumber = function(number) {
                 insertValue(number);
             };
-            
+
             // 追加运算符
             window.appendOperator = function(operator) {
                 insertValue(' ' + operator + ' ');
             };
-            
+
             // 追加函数
             window.appendFunction = function(func) {
                 if (func === '^2') {
@@ -504,27 +445,28 @@
                     applyFunction(func);
                 }
             };
-            
+
             // 计算结果
             window.calculate = function() {
                 evaluateExpression();
             };
-            
+
             // 清空显示
             window.clearDisplay = function() {
                 clearAll();
             };
-            
+
             // 返回首页
             window.goHome = function() {
                 window.location.href = 'index.html';
             };
-            
+
             // Keyboard support
             function keyboardSupport(e) {
                 // Map key input to button presses
                 const allowedKeys = "0123456789.+-*/%^()";
                 if (allowedKeys.indexOf(e.key) !== -1) {
+                    // For power ^, let it be processed by insertValue
                     insertValue(e.key);
                     e.preventDefault();
                 } else if (e.key === 'Enter') {
@@ -538,10 +480,10 @@
                     e.preventDefault();
                 }
             }
-            
+
             // Attach event listeners
             window.addEventListener('keydown', keyboardSupport);
-            
+
             // 初始化显示
             updateDisplay();
         })();
