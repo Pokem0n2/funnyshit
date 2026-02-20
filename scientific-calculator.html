@@ -255,7 +255,10 @@
             
             // Converts degrees to radians
             function toRadians(deg) {
-                return deg * Math.PI / 180;
+                console.log('Converting degrees to radians:', deg);
+                const radians = deg * Math.PI / 180;
+                console.log('Result:', radians);
+                return radians;
             }
             
             // Secure evaluation function using Function constructor
@@ -352,14 +355,70 @@
                 try {
                     // Replace function calls in expression with real evaluations
                     let expr = currentExpression;
+                    console.log('Original expression:', expr);
                     
-                    expr = expr.replace(/sin\(([^)]+)\)/g, (_, val) => functionsMap.sin(safeEval(val)));
-                    expr = expr.replace(/cos\(([^)]+)\)/g, (_, val) => functionsMap.cos(safeEval(val)));
-                    expr = expr.replace(/tan\(([^)]+)\)/g, (_, val) => functionsMap.tan(safeEval(val)));
-                    expr = expr.replace(/log\(([^)]+)\)/g, (_, val) => functionsMap.log(safeEval(val)));
-                    expr = expr.replace(/ln\(([^)]+)\)/g, (_, val) => functionsMap.ln(safeEval(val)));
-                    expr = expr.replace(/sqrt\(([^)]+)\)/g, (_, val) => functionsMap.sqrt(safeEval(val)));
-                    expr = expr.replace(/exp\(([^)]+)\)/g, (_, val) => functionsMap.exp(safeEval(val)));
+                    // First handle trigonometric functions
+                    expr = expr.replace(/sin\(([^)]+)\)/g, (match, val) => {
+                        try {
+                            const arg = safeEval(val);
+                            const result = functionsMap.sin(arg);
+                            return result.toString();
+                        } catch (e) {
+                            throw new Error(`Invalid sin argument: ${val}`);
+                        }
+                    });
+                    expr = expr.replace(/cos\(([^)]+)\)/g, (match, val) => {
+                        try {
+                            const arg = safeEval(val);
+                            const result = functionsMap.cos(arg);
+                            return result.toString();
+                        } catch (e) {
+                            throw new Error(`Invalid cos argument: ${val}`);
+                        }
+                    });
+                    expr = expr.replace(/tan\(([^)]+)\)/g, (match, val) => {
+                        try {
+                            const arg = safeEval(val);
+                            const result = functionsMap.tan(arg);
+                            return result.toString();
+                        } catch (e) {
+                            throw new Error(`Invalid tan argument: ${val}`);
+                        }
+                    });
+                    
+                    // Then handle other functions
+                    expr = expr.replace(/log\(([^)]+)\)/g, (match, val) => {
+                        try {
+                            const result = functionsMap.log(safeEval(val));
+                            return result.toString();
+                        } catch (e) {
+                            throw new Error(`Invalid log argument: ${val}`);
+                        }
+                    });
+                    expr = expr.replace(/ln\(([^)]+)\)/g, (match, val) => {
+                        try {
+                            const result = functionsMap.ln(safeEval(val));
+                            return result.toString();
+                        } catch (e) {
+                            throw new Error(`Invalid ln argument: ${val}`);
+                        }
+                    });
+                    expr = expr.replace(/sqrt\(([^)]+)\)/g, (match, val) => {
+                        try {
+                            const result = functionsMap.sqrt(safeEval(val));
+                            return result.toString();
+                        } catch (e) {
+                            throw new Error(`Invalid sqrt argument: ${val}`);
+                        }
+                    });
+                    expr = expr.replace(/exp\(([^)]+)\)/g, (match, val) => {
+                        try {
+                            const result = functionsMap.exp(safeEval(val));
+                            return result.toString();
+                        } catch (e) {
+                            throw new Error(`Invalid exp argument: ${val}`);
+                        }
+                    });
                     
                     // Evaluate the final expression with safeEval
                     let result = safeEval(expr);
@@ -373,6 +432,7 @@
                     currentExpression = result.toString();
                     resetNext = true;
                 } catch (e) {
+                    console.error('Evaluation error:', e);
                     resultDisplay.textContent = 'Error';
                     currentExpression = '';
                     resetNext = true;
