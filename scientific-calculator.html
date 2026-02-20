@@ -442,8 +442,17 @@
                 } else if (func === 'e') {
                     insertValue('e');
                 } else if (func === '^') {
-                    // 直接添加幂运算符
-                    insertValue('^');
+                    // 当resetNext为true时，先使用上一次的结果，再添加幂运算符
+                    if (resetNext) {
+                        // 保持当前表达式不变（它是上一次的计算结果），直接添加^
+                        resetNext = false;
+                        currentExpression += '^';
+                        updateDisplay();
+                        lastInput = '^';
+                    } else {
+                        // 直接添加幂运算符
+                        insertValue('^');
+                    }
                 } else if (func === '(') {
                     // 直接添加左括号
                     insertValue('(');
