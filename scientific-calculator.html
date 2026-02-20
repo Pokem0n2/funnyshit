@@ -441,6 +441,15 @@
                     insertValue('π');
                 } else if (func === 'e') {
                     insertValue('e');
+                } else if (func === '^') {
+                    // 直接添加幂运算符
+                    insertValue('^');
+                } else if (func === '(') {
+                    // 直接添加左括号
+                    insertValue('(');
+                } else if (func === ')') {
+                    // 直接添加右括号
+                    insertValue(')');
                 } else {
                     applyFunction(func);
                 }
