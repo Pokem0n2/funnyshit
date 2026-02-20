@@ -382,13 +382,13 @@
                     // For this, recursively replace function calls with evaluated values
                     let expr = currentExpression;
 
-                    expr = expr.replace(/sin\(([^)]+)\)/g, (_, val) => functionsMap.sin(safeEval(val)));
-                    expr = expr.replace(/cos\(([^)]+)\)/g, (_, val) => functionsMap.cos(safeEval(val)));
-                    expr = expr.replace(/tan\(([^)]+)\)/g, (_, val) => functionsMap.tan(safeEval(val)));
-                    expr = expr.replace(/log\(([^)]+)\)/g, (_, val) => functionsMap.log(safeEval(val)));
-                    expr = expr.replace(/ln\(([^)]+)\)/g, (_, val) => functionsMap.ln(safeEval(val)));
-                    expr = expr.replace(/sqrt\(([^)]+)\)/g, (_, val) => functionsMap.sqrt(safeEval(val)));
-                    expr = expr.replace(/exp\(([^)]+)\)/g, (_, val) => functionsMap.exp(safeEval(val)));
+                    expr = expr.replace(/sin\(([^)]+)\)/g, (_, val) => functionsMap.sin(safeEval(val)).toString());
+                    expr = expr.replace(/cos\(([^)]+)\)/g, (_, val) => functionsMap.cos(safeEval(val)).toString());
+                    expr = expr.replace(/tan\(([^)]+)\)/g, (_, val) => functionsMap.tan(safeEval(val)).toString());
+                    expr = expr.replace(/log\(([^)]+)\)/g, (_, val) => functionsMap.log(safeEval(val)).toString());
+                    expr = expr.replace(/ln\(([^)]+)\)/g, (_, val) => functionsMap.ln(safeEval(val)).toString());
+                    expr = expr.replace(/sqrt\(([^)]+)\)/g, (_, val) => functionsMap.sqrt(safeEval(val)).toString());
+                    expr = expr.replace(/exp\(([^)]+)\)/g, (_, val) => functionsMap.exp(safeEval(val)).toString());
 
                     // Evaluate the final expression with safeEval, supporting power ^ operator replacement in safeEval
                     let result = safeEval(expr);
