@@ -395,11 +395,22 @@
 
                     // Handle floating point precision issues - round to max 10 decimals
                     if (typeof result === 'number') {
-                        result = +result.toFixed(10);
+                        // 处理接近0的情况，如sin(180)、cos(90)
+                        if (Math.abs(result) < 1e-10) {
+                            result = 0;
+                        }
+                        // 处理tan(90)等无穷大的情况
+                        else if (Math.abs(result) > 1e15) {
+                            result = '∞';
+                        }
+                        // 常规数字四舍五入
+                        else {
+                            result = +result.toFixed(10);
+                        }
                     }
 
                     resultDisplay.textContent = result;
-                    currentExpression = result.toString();
+                    currentExpression = typeof result === 'string' ? result : result.toString();
                     resetNext = true;
                 } catch (e) {
                     resultDisplay.textContent = 'Error';
