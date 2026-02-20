@@ -450,6 +450,9 @@
                 } else if (func === ')') {
                     // 直接添加右括号
                     insertValue(')');
+                } else if (['sin', 'cos', 'tan', 'log', 'ln', 'sqrt'].includes(func)) {
+                    // 只添加函数名和左括号，让用户手动输入右括号
+                    insertValue(func + '(');
                 } else {
                     applyFunction(func);
                 }
