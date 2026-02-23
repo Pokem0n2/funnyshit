@@ -25,6 +25,7 @@ funnyshit/
 ├── scientific-calculator.html # 科学计算器
 ├── unit-converter.html # 单位和汇率换算
 ├── latex-renderer.html # LaTeX公式渲染
+├── markdown-preview.html # Markdown预览
 └── README.md           # 项目说明文件
 ```
 
@@ -83,6 +84,14 @@ funnyshit/
 - 支持常用LaTeX数学公式语法
 - 提供了常用公式示例
 - 修复了公式渲染错误的问题
+
+### 11. Markdown预览 (markdown-preview.html)
+- 实现了左右分栏布局的Markdown实时预览
+- 左侧输入Markdown语法，右侧实时显示渲染效果
+- 支持完整的Markdown语法，包括标题、粗体、斜体、列表、代码块、链接、图片、引用和表格
+- 使用marked.js库实现Markdown到HTML的转换
+- 响应式设计，在移动设备上自动调整为上下布局
+- 美观的界面，使用灰白色渐变背景和粉色渐变按钮
 
 ## 技术栈
 
